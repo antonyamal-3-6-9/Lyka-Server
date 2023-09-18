@@ -31,3 +31,15 @@ class CouponSerializer(serializers.ModelSerializer):
     class Meta:
         model = CouponType
         fields = "__all__"
+
+
+class TransactionRetriveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderTransaction
+        fields = "__all__"
+
+
+class SalesReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SalesReport
+        fields = "__all__"

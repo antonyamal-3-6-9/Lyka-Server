@@ -1,8 +1,10 @@
 from rest_framework import serializers
 from .models import *
-from lyka_address.serializers import *
 from lyka_products.serializers import ProductRetriveSerializer, ColorSerializer, VariationsSerializer
+from lyka_address.serializers import CustomerAddressRetriveSerializer, SellerStoreAddressRetriveSerializer
+from lyka_payment.serializers import CouponSerializer
 import uuid
+from lyka_seller.serializers import SellerBusinessNameSerializer
 
 
 
@@ -48,20 +50,42 @@ class OrderItemsRetriveSerializer(serializers.ModelSerializer):
 
 class OrderRetriveSerializer(serializers.ModelSerializer):
     item = OrderItemsRetriveSerializer()
+    shipping_address = CustomerAddressRetriveSerializer()
+    seller = SellerBusinessNameSerializer()
+    class Meta:
+        model = Order
+        fields = "__all__"
+
+
+class OrderDetailsRetriveSerializer(serializers.ModelSerializer):
+    item = OrderItemsRetriveSerializer()
+    shipping_address = CustomerAddressRetriveSerializer()
+    billing_address = CustomerAddressRetriveSerializer()
+    credentials = OrderCredentialsSerializer()
+    pickup_address = SellerStoreAddressRetriveSerializer()
+    applied_coupon = CouponSerializer()
     class Meta:
         model = Order
         fields = "__all__"
 
 
 
+
+
 class OrderGroupPriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderGroup
-        fields = ["total_price", "total_selling_price", "additional_charges", "coupon_discount", "discount"]
+        fields = ["total_price", "total_selling_price", "additional_charges", "coupon_discount", "discount", "total_shipping_charge"]
 
 
 class OrderItemsPriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItems
         fields = ["product_price", "selling_price", "coupon_discount", "discount", "additional_charges"]
+
+class OrderPriceSerializer(serializers.ModelSerializer):
+    item = OrderItemsPriceSerializer()
+    class Meta:
+        model = Order
+        fields = ["item", "shipping_charge"]
 

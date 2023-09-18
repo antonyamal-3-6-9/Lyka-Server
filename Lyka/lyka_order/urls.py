@@ -13,7 +13,16 @@ urlpatterns = [
     path('confirm-items/<uuid:order_id>/', OrderItemsConfirmationView.as_view(), name='confirm-items'),
     path('add-address/<uuid:order_id>/<int:address_id>/', OrderAddressUpdateView.as_view(), name='add-address'),
     path('apply-coupon/', OrderApplyCoupon.as_view(), name='order-apply-coupon'),
-    path('get-order-price/<uuid:order_id>/', OrderItemsConfirmationView.as_view(), name='get-price')
+    path('get-order-price/<uuid:order_id>/', OrderItemsConfirmationView.as_view(), name='get-price'),
+    path('cancel-order/<uuid:order_id>/', CancelOrderView.as_view(), name='cancel-order'),
+    path('retrive/<uuid:order_id>/', OrderDetailsRetriveView.as_view(), name='order-retrive'),
+
+    path('get-seller-orders/', SellerOrderListView.as_view(), name='seller-order-list'),
+    path('order-accept-or-reject/', OrderAcceptOrReject.as_view(), name="accept-or-reject"),
+
+    path('get-customer-orders/', CustomerOrderListView.as_view(), name='customer-order-list'),
+    path('delete/<uuid:order_id>/', CustomerOrderCancelView.as_view(), name='delete-order'),
+    path('initiate-return/<uuid:order_id>/', OrderReturnInitiationView.as_view(), name='initiate-return'),
 ]
 
 if settings.DEBUG:

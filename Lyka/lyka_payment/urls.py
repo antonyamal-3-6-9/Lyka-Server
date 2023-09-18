@@ -8,7 +8,6 @@ urlpatterns = [
     path("razorpay-create/", RazorPayOrderPaymentCreationView.as_view(), name='create'),
     path("razorpay-capture/", RazorPayOrderPaymentCaptureView.as_view(), name='capture'),
     
-
     path('get-coupons/', CouponRetriveView.as_view(), name='get-coupon'),
 
     path('create-paypal-order/', PaypalPaymentView.as_view(), name="paypal-create"),
@@ -16,6 +15,16 @@ urlpatterns = [
 
     path('create-stripe-order/', StripePaymentView.as_view(), name='stripe-create'),
     path('capture-stripe-order/', StripePaymentView.as_view(), name='capture-stripe'),
+
+    path('seller/get-sales/day/', SalesDaysRetriveView.as_view(), name='get-sales'),
+    path('seller/get-sales/week/', SalesWeekView.as_view(), name='sales-week'),
+    path('seller/get-sales/month/', SalesMonthView.as_view(), name='sales-month'),
+    path('seller/get-sales/year/', SalesYearView.as_view(), name='sales-year'),
+
+    path('seller/get-sales-report/', SalesReportRetriveView.as_view(), name='get-sales-report'),
+    path('seller/get-sales-report/time-line/', SalesReportTimelimeView.as_view(), name='get-sales-report-timeline'),
+
+    path('seller/get-sales/', SalesRetriveView.as_view(), name='get-sales')
 ]
 
 

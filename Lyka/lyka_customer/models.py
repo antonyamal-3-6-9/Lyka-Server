@@ -9,6 +9,7 @@ class Customer(models.Model):
     cart = models.OneToOneField("lyka_cart.Cart", on_delete=models.SET_NULL, null=True)
     wallet = models.OneToOneField("lyka_payment.Wallet", on_delete=models.CASCADE, null=True)
     is_verified = models.BooleanField(default=False)
+    is_email_verified = models.BooleanField(default=False)
 
 class CustomerOtp(models.Model):
     verification_credential = models.CharField(unique=True, max_length=255, null=True)

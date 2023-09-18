@@ -79,3 +79,9 @@ class LykaUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'phone'
     REQUIRED_FIELDS = ['role']
+
+
+
+class BlacklistedToken(models.Model):
+    token = models.CharField(max_length=500)
+    blacklisted_at = models.DateTimeField(auto_now_add=True)

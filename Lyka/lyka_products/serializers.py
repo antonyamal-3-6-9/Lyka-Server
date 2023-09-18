@@ -118,7 +118,7 @@ class UnitCreateSerializer(serializers.ModelSerializer):
     unit_id = serializers.UUIDField(read_only=True)
     class Meta:
         model = Unit
-        fields = ["unit_id","color_code", "variant", "stock", "selling_price", "offer_price", "original_price", "product"]
+        fields = ["unit_id","color_code", "variant", "stock", "selling_price", "offer_price", "original_price", "product", "warehouse"]
 
     def create(self, validated_data):
         u_id = uuid.uuid1()

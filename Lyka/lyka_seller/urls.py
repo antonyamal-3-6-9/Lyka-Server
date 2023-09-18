@@ -29,7 +29,9 @@ urlpatterns = [
     path("verified-or-not/", SellerVerifiedOrNOt.as_view(), name="seller-verified"),
     path("get-seller-profile/", GetSellerView.as_view(), name='get-seller-profile'),
     path("update-profile/<uuid:pk>/", UpdateSellerProfile.as_view(), name='update-profile'),
-    path("change-password/", SellerPasswordChangeView.as_view(), name='password-change')
+    path("change-password/", SellerPasswordChangeView.as_view(), name='password-change'),
+    path("logout/", SellerLogOutView.as_view(), name='logout'),
+    path('store-exists-or-not/', IsStoreExistsOrNot.as_view(), name="store-exists")
 ]
 
 if settings.DEBUG:

@@ -11,6 +11,7 @@ from sendgrid.helpers.mail import Mail
 from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
+from lyka_user.models import BlacklistedToken
 from datetime import date
 import random
 import re
@@ -401,21 +402,17 @@ class SellerGstVerificationView(generics.CreateAPIView):
             return Response({"message" : str(e)}, status=status.HTTP_502_BAD_GATEWAY)
 
 
-class UserDataView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        # Perform actions with the authenticated user
-        return Response({'message': f'Hello, {user.phone}!'})
-
 
 class SellerLoggedInOrNot(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
-        return Response({"message": "user is logged in"}, status=status.HTTP_200_OK)
+        if user.role == LykaUser.SELLER:
+            return Response({"message": "user is logged in"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message" : "Not logged in"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class SellerCreateView(generics.ListCreateAPIView):
@@ -424,6 +421,8 @@ class SellerCreateView(generics.ListCreateAPIView):
 
 
 class SellerRetriveView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]    
     def get(self, request):
         try:
             user = request.user
@@ -437,6 +436,8 @@ class SellerRetriveView(APIView):
 
 
 class AddPickUpStoreView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]    
     def post(self, request):
         try:
             user = request.user
@@ -459,7 +460,6 @@ class AddPickUpStoreView(APIView):
             store.save()
 
             store_data = PickupStoreViewSerializer(store, many=False)
-            print(store_data)
             return Response(store_data.data, status=status.HTTP_200_OK)
         except Seller.DoesNotExist:
             return Response({"message": "Seller doesn't exist"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -468,6 +468,8 @@ class AddPickUpStoreView(APIView):
 
 
 class PickupStoreRetirveView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]    
     def get(self, request):
         try:
             user = request.user
@@ -489,6 +491,8 @@ class PickUpStoreDeleteView(generics.DestroyAPIView):
 
 
 class SellerVerifiedOrNOt(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
             user = request.user
@@ -502,6 +506,8 @@ class SellerVerifiedOrNOt(APIView):
 
 
 class GetSellerView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]    
     def get(self, request):
         try:
             user = request.user
@@ -522,6 +528,8 @@ class UpdateSellerProfile(generics.UpdateAPIView):
 
 
 class SellerPasswordChangeView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
             existing_password = request.data["existing_password"]
@@ -539,3 +547,32 @@ class SellerPasswordChangeView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class SellerLogOutView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        auth_header = request.META.get('HTTP_AUTHORIZATION')
+        if auth_header and auth_header.startswith('Bearer '):
+            jwt_token = auth_header.split(' ')[1]
+            BlacklistedToken.objects.create(token=jwt_token)
+            return Response({"message" : "Successfully logged out"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message" : "Authentication failed"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+
+class IsStoreExistsOrNot(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        try:
+            seller = Seller.objects.get(user=request.user)
+            if PickupStore.objects.get(owner=seller).exists():
+                return Response({"message" : "Pickup store exists"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"message" : "Pickup store doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
+        except Seller.DoesNotExist:
+            return Response({"message" : "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        

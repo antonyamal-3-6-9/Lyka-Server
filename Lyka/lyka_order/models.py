@@ -12,23 +12,26 @@ class Tax(models.Model):
     limit = models.DecimalField(max_digits=10, decimal_places=2)
 
 class OrderCredentials(models.Model):
-    shipping_partner_order_id = models.CharField(max_length=100)
-    payment_id = models.CharField(max_length=100)
-    tracking_id = models.CharField(max_length=100)
+    shipping_partner_order_id = models.CharField(max_length=100, null=True)
+    payment_id = models.CharField(max_length=100, null=True)
+    tracking_id = models.CharField(max_length=100, null=True)
 
 class OrderItems(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey('lyka_products.Product', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     product_price = models.PositiveIntegerField()
     additional_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    product_variant = models.ForeignKey(Variations, on_delete=models.SET_NULL, null=True)
-    product_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
+    product_variant = models.ForeignKey('lyka_products.Variations', on_delete=models.SET_NULL, null=True)
+    product_color = models.ForeignKey('lyka_products.Color', on_delete=models.SET_NULL, null=True)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def set_selling_price(self):
         self.selling_price = self.selling_price * self.quantity
+        self.discount = self.discount * self.quantity
+        self.original_price = self.original_price * self.quantity
 
     def get_tax_price(self, rate, product_price, quatity):
         return (((product_price * rate) / 100) * quatity) 
@@ -52,6 +55,8 @@ class OrderGroup(models.Model):
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     order_count = models.IntegerField(default=0)
+    applied_coupon = models.ForeignKey("lyka_payment.CouponType", on_delete=models.SET_NULL, null=True)
+    total_shipping_charge = models.PositiveIntegerField(default=0)
 
     def set_total_price(self):
         orders = Order.objects.filter(order_list=self.order_list_id)
@@ -59,13 +64,15 @@ class OrderGroup(models.Model):
         self.additional_charges = 0
         self.discount = 0
         self.total_selling_price = 0
-        self.coupon_discount = 0 
+        self.coupon_discount = 0
+        self.total_shipping_charge = 0
         for order in orders:
             self.total_price = self.total_price + order.item.product_price
             self.additional_charges = self.additional_charges + order.item.additional_charges
             self.total_selling_price = self.total_selling_price + order.item.selling_price
             self.discount = self.discount + order.item.discount
             self.coupon_discount = self.coupon_discount + order.item.coupon_discount
+            self.total_shipping_charge = self.total_shipping_charge + order.shipping_charge
 
 
 class Order(models.Model):
@@ -82,6 +89,12 @@ class Order(models.Model):
     credentials = models.OneToOneField(OrderCredentials, on_delete=models.CASCADE, null=True)
     time = models.DateTimeField(default=timezone.now())
     payment_method = models.CharField(max_length=50, null=True)
+    applied_coupon = models.ForeignKey("lyka_payment.CouponType", on_delete=models.SET_NULL, null=True)
+    shipping_charge = models.PositiveIntegerField(default=0)
+    delivery_date = models.DateField(null=True)
+
+    class Meta:
+        ordering = ['time']
 
 
 

@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from django.utils import timezone
 from lyka_categories.models import *
 from datetime import datetime, timedelta
+from lyka_seller.models import PickupStore
 import uuid
 
 class Details(models.Model):
@@ -73,6 +74,7 @@ class Unit(models.Model):
     seller = models.ForeignKey("lyka_seller.Seller", on_delete=models.CASCADE, null=True)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     added_on = models.DateTimeField(default=timezone.now())
+    warehouse = models.ForeignKey(PickupStore, on_delete=models.SET_NULL, null=True)
 
     def set_slug(self):
         slug = f"{self.product.brand} {self.product.name} {self.variant.variation} {self.color_code.color}"
@@ -90,7 +92,7 @@ class Unit(models.Model):
         self.save()
 
     def __str__(self):
-        return f"#{self.seller.bussiness_name} {self.product.brand} {self.product.name}"
+        return f"#{self.seller.bussiness_name} {self.product.brand} {self.product.name} {self.variant.variation} {self.color_code.color}"
 
 
 

@@ -77,13 +77,12 @@ class IncrementCartView(APIView):
             if customer.cart is not None:
                 cart = customer.cart
                 cart_item = CartItems.objects.get(cart=cart, id=cart_item_id)
-                if cart_item.unit.stock > 0:
-                    cart_item.quantity += 1
-                    cart_item.item_set()
-                    cart_item.save()
-                    return Response({"message" : f'The quality of {cart_item.unit.product.brand} {cart_item.unit.product.name} has been increased by one'}, status=status.HTTP_200_OK)
-                elif cart_item.item.stock == 0:
+                if cart_item.quantity >= cart_item.unit.stock:
                     return Response({"message":"Cannot increase quantity, Item out of stock"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                cart_item.quantity += 1
+                cart_item.item_set()
+                cart_item.save()
+                return Response({"message" : f'The quality of {cart_item.unit.product.brand} {cart_item.unit.product.name} has been increased by one'}, status=status.HTTP_200_OK)
             else:
                 return Response({"message" : "Cart Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
         except Customer.DoesNotExist:

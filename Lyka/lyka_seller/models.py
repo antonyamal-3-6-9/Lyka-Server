@@ -1,8 +1,5 @@
 from django.db import models
 from lyka_user.models import LykaUser
-from lyka_payment.models import Wallet
-from lyka_address.models import SellerStoreAddress
-import uuid
 
 
 class SellerOtp(models.Model):
@@ -50,8 +47,6 @@ class Seller(models.Model):
     pan_card = models.OneToOneField(PanCard, on_delete=models.SET_NULL, null=True)
     bank_account = models.OneToOneField(BankAccount, on_delete=models.SET_NULL, null=True)
     gstin = models.OneToOneField(GstRegistrationNumber, on_delete=models.SET_NULL, null=True)
-
-    wallet = models.OneToOneField('lyka_payment.Wallet', on_delete=models.CASCADE, null=True)
 
     def is_verified(self):
         if self.address_verified and self.pan_verified and self.bank_account_verified and self.gstin_verified:

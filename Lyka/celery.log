@@ -1,0 +1,27 @@
+[2023-08-06 03:28:15,417: WARNING/MainProcess] No hostname was supplied. Reverting to default 'localhost'
+[2023-08-06 03:28:15,417: CRITICAL/MainProcess] Unrecoverable error: ImproperlyConfigured("Unknown result backend: 'amqp'.  Did you spell that correctly? ('is a Python module, not a backend class.')")
+Traceback (most recent call last):
+  File "H:\React-Django_Final\Django-Server\server\Lib\site-packages\celery\worker\worker.py", line 202, in start
+    self.blueprint.start(self)
+  File "H:\React-Django_Final\Django-Server\server\Lib\site-packages\celery\bootsteps.py", line 112, in start
+    self.on_start()
+  File "H:\React-Django_Final\Django-Server\server\Lib\site-packages\celery\apps\worker.py", line 135, in on_start
+    self.emit_banner()
+  File "H:\React-Django_Final\Django-Server\server\Lib\site-packages\celery\apps\worker.py", line 169, in emit_banner
+    ' \n', self.startup_info(artlines=not use_image))),
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "H:\React-Django_Final\Django-Server\server\Lib\site-packages\celery\apps\worker.py", line 231, in startup_info
+    results=self.app.backend.as_uri(),
+            ^^^^^^^^^^^^^^^^
+  File "H:\React-Django_Final\Django-Server\server\Lib\site-packages\celery\app\base.py", line 1293, in backend
+    self._backend = self._get_backend()
+                    ^^^^^^^^^^^^^^^^^^^
+  File "H:\React-Django_Final\Django-Server\server\Lib\site-packages\celery\app\base.py", line 965, in _get_backend
+    backend, url = backends.by_url(
+                   ^^^^^^^^^^^^^^^^
+  File "H:\React-Django_Final\Django-Server\server\Lib\site-packages\celery\app\backends.py", line 68, in by_url
+    return by_name(backend, loader), url
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "H:\React-Django_Final\Django-Server\server\Lib\site-packages\celery\app\backends.py", line 53, in by_name
+    raise ImproperlyConfigured(UNKNOWN_BACKEND.strip().format(
+celery.exceptions.ImproperlyConfigured: Unknown result backend: 'amqp'.  Did you spell that correctly? ('is a Python module, not a backend class.')

@@ -33,6 +33,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'django_celery_results',
+    'django_celery_beat',
     'rest_framework',
     'corsheaders',
     'lyka_address',
@@ -72,7 +74,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware'
+    'corsheaders.middleware.CorsMiddleware',
+    'middleware.TokenBlacklistMiddleware'
 ]
 
 CORS_EXPOSE_HEADERS = [
@@ -83,6 +86,8 @@ CORS_ALLOW_HEADERS = [
     'Authorization',
     'Content-Type'
 ]
+
+BROKER_URL = 'amqp://guest:guest@localhost:5672/' 
 
 ROOT_URLCONF = 'Lyka.urls'
 
@@ -104,17 +109,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Lyka.wsgi.application'
 
-OTP_AUTH_TOKEN = "8b7ecbf5-0cfd-11ee-addf-0200cd936042"
-
-RAZORPAY_API_KEY = "rzp_test_R79QGigrBUV08W"
-RAZORPAY_API_SECRET = "E8vVAje6KvZgiFaP6z8E4wPw"
-
-EASYPOST_API_KEY = "EZTKb48cb65bc5354fc18d42b1e73e6741ca5UwJpl0kXIqfpprz0x4elw"
-
-PAYPAL_CLIENT_ID = "AYQ78uXRJKJsvFWNX49FPhjxCGJ-0NNx7YooDZ4Tml6h53XKYfdcqiwSUG_1TZrJbhJ2nIqS8DafBuzB"
-PAYPAL_CLIENT_SECRET = "EAw2mG3kU-idbk79SbkXHcFZ4U81LHMYy9pK1jh_utgfAzo6JoKeOPNMkltMjaiZJIrmCJeDbngZwLN6"
-
-STRIPE_API_KEY = "sk_test_51NNgMcSFoVzzDNdPTrQ2slu3CU6K7MFAwVpH3jTmtrG908AFQqMmPZlRHNNsSsXPSbRWj6RarUOI0leQfXFHQYr900EttvNCJg"
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
@@ -140,6 +134,10 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
+CELERY_RESULT_BACKEND = 'db+postgresql://postgres:root@localhost:5432/Lyka'
+
+
 
 AUTHENTICATION_BACKENDS = [
     'custom_auth_backend.EmailBackend',
@@ -181,6 +179,11 @@ USE_I18N = True
 
 USE_TZ = True
 
+CELERY_TIMEZONE = "UTC"
+
+CELERY_ALWAYS_EAGER = True
+
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -197,3 +200,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
+
+
+OTP_AUTH_TOKEN = "8b7ecbf5-0cfd-11ee-addf-0200cd936042"
+
+RAZORPAY_API_KEY = "rzp_test_R79QGigrBUV08W"
+RAZORPAY_API_SECRET = "E8vVAje6KvZgiFaP6z8E4wPw"
+
+EASYPOST_API_KEY = "EZTKb48cb65bc5354fc18d42b1e73e6741ca5UwJpl0kXIqfpprz0x4elw"
+
+PAYPAL_CLIENT_ID = "AYQ78uXRJKJsvFWNX49FPhjxCGJ-0NNx7YooDZ4Tml6h53XKYfdcqiwSUG_1TZrJbhJ2nIqS8DafBuzB"
+PAYPAL_CLIENT_SECRET = "EAw2mG3kU-idbk79SbkXHcFZ4U81LHMYy9pK1jh_utgfAzo6JoKeOPNMkltMjaiZJIrmCJeDbngZwLN6"
+
+STRIPE_API_KEY = "sk_test_51NNgMcSFoVzzDNdPTrQ2slu3CU6K7MFAwVpH3jTmtrG908AFQqMmPZlRHNNsSsXPSbRWj6RarUOI0leQfXFHQYr900EttvNCJg"

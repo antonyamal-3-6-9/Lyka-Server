@@ -8,7 +8,7 @@ class LykaPaymentConfig(AppConfig):
     name = 'lyka_payment'
 
     def ready(self):
-        from . import signals
+        from lyka_payment import signals
         from lyka_customer.models import Customer
         from .recievers import update_unit_stock
         signals.order_placed.connect(update_unit_stock, sender=Customer)

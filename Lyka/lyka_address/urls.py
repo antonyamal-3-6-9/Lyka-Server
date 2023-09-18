@@ -9,7 +9,7 @@ urlpatterns = [
     path("put-address/<int:pk>/", StoreAddressEditView.as_view(), name='put-address'),
     path("create-customer-address/", CustomerAddressCreateView.as_view(), name='add-customer-address'),
     path("get-customer-address/", CustomerAddressRetriveView.as_view(), name='get-customer-address'),
-    path("put-customer-address", CustomerAddressEditView.as_view(), name='put-customer-address')
+    path("put-customer-address/<int:pk>/", CustomerAddressEditView.as_view(), name='put-customer-address')
 ] 
 
 

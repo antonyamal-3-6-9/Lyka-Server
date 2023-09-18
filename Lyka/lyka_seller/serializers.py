@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import *
-from lyka_address.serializers import SellerStoreAddressSerializer
+from lyka_address.serializers import SellerStoreAddressRetriveSerializer, SellerStoreAddressSerializer
 import uuid
 from rest_framework.exceptions import ValidationError
 from lyka_customer.models import LykaUser
@@ -120,7 +120,7 @@ class PickupStoreSerializer(serializers.ModelSerializer):
     
 
 class PickupStoreViewSerializer(serializers.ModelSerializer):
-    store_address = SellerStoreAddressSerializer()
+    store_address = SellerStoreAddressRetriveSerializer()
     class Meta:
         model = PickupStore
         fields = "__all__"
@@ -166,6 +166,12 @@ class SellerUpdateSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop("user")
         bussiness_name = validated_data.pop("bussiness_name", instance.bussiness_name)
         if user_data:
+            if user_data["email"]:
+                if LykaUser.objects.role_exists_email(email=user_data["email"], role=LykaUser.SELLER):
+                    raise ValidationError("Seller already exists with the same email")
+            elif user_data["phone"]:
+                if LykaUser.objects.role_exists_phone(phone=user_data["phone"], role=LykaUser.SELLER):
+                    raise ValidationError("Seller exists with the given phone")
             user_serializer = SellerUserUpdateSerializer(instance.user, user_data)
             user_serializer.is_valid(raise_exception=True)
             user = user_serializer.save()
@@ -173,6 +179,8 @@ class SellerUpdateSerializer(serializers.ModelSerializer):
                 instance.number_verified = True
                 instance.save()
         if bussiness_name:
+            if Seller.objects.filter(bussiness_name=bussiness_name).exists():
+                raise ValidationError("Business name already exists")
             instance.bussiness_name = bussiness_name
             instance.save()
         return super().update(instance, validated_data)

@@ -85,7 +85,7 @@ class LykaUnitCreateView(APIView):
             existing_units_messages = []
 
             for unit_data in units_data:
-                if Unit.objects.filter(product__productId=unit_data["product"], variant__id=unit_data["variant"], color__id=unit_data["color"], seller=seller).exists():
+                if Unit.objects.filter(product__productId=unit_data["product"], variant__id=unit_data["variant"], color_code=unit_data["color_code"], seller=seller).exists():
                     existing_units_messages.append(f"A unit with the same data already exists: {unit_data}")
                 else:
                     unit_serializer = UnitCreateSerializer(data=unit_data)
