@@ -280,3 +280,19 @@ class PasswordChangeView(APIView):
                 return Response({"message" : "Invalid user"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        

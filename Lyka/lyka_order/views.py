@@ -197,7 +197,8 @@ class OrderAddressUpdateView(APIView):
                             order.item.product_price += order.shipping_charge
                             order.item.save()
                     else:
-                        shipping_charge = self.calculate_shipping_charge(address.zip_code, order.pickup_address.zip_code)
+                        # shipping_charge = self.calculate_shipping_charge(address.zip_code, order.pickup_address.zip_code)
+                        shipping_charge = 40
                         order.shipping_address = address
                         order.billing_address = address
                         order.shipping_charge = shipping_charge
@@ -236,8 +237,8 @@ class OrderAddressUpdateView(APIView):
 
         except CustomerAddress.DoesNotExist:
             return Response({"message": "Address not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # except Exception as e:
+        #     return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class OrderApplyCoupon(APIView):
@@ -632,7 +633,7 @@ class OrderReturnInitiationView(APIView):
             order = Order.objects.get(order_id=order_id, customer__user=request.user)
             order.order_status = "Return Requested"
             order.save()
-            return Response({"message" : "Return has been requested succesfully"}, status=status.HTTP_200_OK)
+            return Response({"message" : "Return has been requested successfully"}, status=status.HTTP_200_OK)
         except Order.DoesNotExist:
             return Response({"message" : "Order not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
