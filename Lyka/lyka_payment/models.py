@@ -67,17 +67,18 @@ def generate_report_timeline(seller, start_date, end_date):
 
 
 
-    sales_report = SalesReport(
-        seller=seller,
-        start_date=start_date,
-        end_date=end_date,
-        total_sales=total_sales,
-        total_profit=total_profit,
-        total_amount=total_amount,
-        total_products_sold=total_units_sold,
-        total_refunds=total_refund,
-        total_amount_refunded=total_amount_refunded
-        )
+    sales_report, created = SalesReport.objects.get_or_create(pk=1)
+    
+    sales_report.seller=seller,
+    sales_report.start_date=start_date,
+    sales_report.end_date=end_date,
+    sales_report.total_sales=total_sales,
+    sales_report.total_profit=total_profit,
+    sales_report.total_amount=total_amount,
+    sales_report.total_products_sold=total_units_sold,
+    sales_report.total_refunds=total_refund,
+    sales_report.total_amount_refunded=total_amount_refunded
+        
     sales_report.save()
     return sales_report
 
@@ -100,16 +101,16 @@ def generate_report(seller):
         total_refund = len(unsuccessful_transactions)
         total_amount_refunded = unsuccessful_transactions.aggregate(total_amount_refunded=Sum('amount'))['total_amount_refunded']
 
+    sales_report, created = SalesReport.objects.get_or_create(pk=1)
 
-    sales_report = SalesReport(
-        seller=seller,
-        total_sales=total_sales,
-        total_profit=total_profit, 
-        total_products_sold=total_units_sold,
-        total_amount=total_amount,
-        total_refunds=total_refund,
-        total_amount_refunded=total_amount_refunded
-        )
+    sales_report.seller=seller,
+    sales_report.total_sales=total_sales,
+    sales_report.total_profit=total_profit, 
+    sales_report.total_products_sold=total_units_sold,
+    sales_report.total_amount=total_amount,
+    sales_report.total_refunds=total_refund,
+    sales_report.total_amount_refunded=total_amount_refunded
+
     sales_report.save()
     return sales_report
 

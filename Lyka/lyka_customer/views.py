@@ -60,7 +60,6 @@ class EmailLogin(APIView):
 class PhoneOtpLogin(APIView):
     def get(self, request, phone):
         if LykaUser.objects.role_exists_phone(phone=phone, role=LykaUser.CUSTOMER):
-            print(phone)
             user = LykaUser.objects.get(phone=phone, role=LykaUser.CUSTOMER)
             new_otp = otp_generator()
             user.otp = new_otp

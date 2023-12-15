@@ -63,3 +63,8 @@ class CustomerAddressRetriveSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerAddress
         fields = "__all__"
+
+class CustomerAddressUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerAddress
+        fields = "__all__"

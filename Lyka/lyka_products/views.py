@@ -39,6 +39,7 @@ class ProductCreateView(APIView):
             images_data = request.data.pop('images[]')
             colors_data = request.data.pop('colors[]')
             variations_data = request.data.pop('variations[]')
+            user = request.user
 
             data = convert_to_nested_dict(request.data)
             product_data = data['product']
@@ -51,8 +52,13 @@ class ProductCreateView(APIView):
             details_serializer = PDetailsSerializer(data=details_data)
             details_serializer.is_valid(raise_exception=True)
             details = details_serializer.save()
+            
 
             product.details = details
+
+            if user.role == LykaUser.ADMIN:
+                product.verified = True
+
             product.save()
 
             for color_data in colors_data:
