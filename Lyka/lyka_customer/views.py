@@ -96,7 +96,7 @@ class PhoneOtpLogin(APIView):
         else:
             return Response({"message" : "user doesn't exist with this number"}, status=status.HTTP_404_NOT_FOUND)
         
-class CustomerOtpView(APIView):
+class CustomerOtpView(APIView): 
     def get(self, request, phone):
         if not LykaUser.objects.role_exists_phone(phone=phone, role=LykaUser.CUSTOMER):
             new_otp = otp_generator()
