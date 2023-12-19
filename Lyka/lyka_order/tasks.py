@@ -30,7 +30,7 @@ def generate_transaction(order):
                 is_successful = True,
                 profit = order.item.product_price - order.item.original_price,
                 quantity = order.item.quantity,
-                notes = f'Transaction recorded for the order of {order.item.product.brand} {order.item.product.name} {order.item.product_variant} {order.item.product_color} from {order.seller.bussiness_name} to {order.shipping_address.name}'
+                notes = f'Transaction recorded for the Return of Order {order.item.product.brand} {order.item.product.name} {order.item.product_variant} {order.item.product_color} from {order.seller.bussiness_name} to {order.shipping_address.name}'
             )
     return True
 
@@ -50,7 +50,6 @@ def updating_order():
     return_requested_orders = Order.objects.filter(order_status="Return Requested")
     return_picked_up_orders = Order.objects.filter(order_status="Picked Up for Return")
     current_time = datetime.now()  
-    print("running")
 
     for order in accepted_orders:
         order_time_naive = order.time.astimezone(timezone.utc).replace(tzinfo=None) 

@@ -13,7 +13,6 @@ urlpatterns = [
     path("address/", include("lyka_address.urls")),
     path("cart/", include("lyka_cart.urls")),
     path('order/', include("lyka_order.urls")),
-    path('admin/', include("lyka_admin.urls"))
 ]
 
 if settings.DEBUG:
