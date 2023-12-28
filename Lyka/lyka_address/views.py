@@ -24,11 +24,13 @@ class CustomerAddressCreateView(generics.ListCreateAPIView):
             return Response(address_to_return.data, status=status.HTTP_200_OK)
         except Customer.DoesNotExist:
             return Response({"message" : "Authentication failed"}, status=status.HTTP_401_UNAUTHORIZED)
+        except ValidationError:
+            return Response({"message" : "Invalid Address"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"message" : str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class CustomerAddressRetriveView(generics.ListAPIView):
+class CustomerAddressListView(generics.ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
@@ -40,9 +42,21 @@ class CustomerAddressRetriveView(generics.ListAPIView):
         except Customer.DoesNotExist:
             return Response({"message" : "Authentication failed"}, status=status.HTTP_401_UNAUTHORIZED)
         except CustomerAddress.DoesNotExist:
-            return Response({"message" : "No saved addressess"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message" : "No saved address"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class CustomerAddressRetriveView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, address_id):
+        try:
+            address = CustomerAddress.objects.get(id=address_id)
+            address_data = CustomerAddressRetriveSerializer(address, many=False)
+            return Response(address_data.data, status=status.HTTP_200_OK)
+        except CustomerAddress.DoesNotExist:
+            return Response({"message" : "Address not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CustomerAddressEditView(generics.UpdateAPIView):
@@ -53,13 +67,16 @@ class CustomerAddressEditView(generics.UpdateAPIView):
 
 
 class StoreAddressEditView(generics.UpdateAPIView):
-    serializer_class = SellerStoreAddressSerializer
-    queryset = SellerStoreAddress.objects.all()
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = SellerStoreAddressUpdateSerializer
+    queryset = SellerStoreAddress.objects.all()
+        
 
 
 class StoreAddressRetriveView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request, address_id):
         user = request.user
         if user is not None:
