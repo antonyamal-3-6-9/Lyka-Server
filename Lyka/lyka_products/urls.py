@@ -20,6 +20,9 @@ urlpatterns = [
     path('get-all-items/', UnitListView.as_view(), name='product-retrive-serializer'),
     path('get-item-details/<uuid:unit_id>/', ItemRetriveView.as_view(), name="get-product-details"),
     path('get-product-variations/<uuid:pk>/', ProductVariationGetView.as_view(), name='get-variations'),
+    path('get-items/main/<uuid:main>/', LykaItemMainCategoryRetriveView.as_view(), name='get-main-items'),
+    path('get-items/root/<uuid:root>/', LykaItemRootCategoryRetriveView.as_view(), name="get-root-items"),
+    path('get-items/sub/<uuid:sub>/', LykaItemSubCategoryRetriveView.as_view(), name="get-sub-items"),
     path('color-or-variation-exists/<uuid:seller_id>/<uuid:product_id>/<int:color_id>/<int:variant_id>/<str:is_variant_color>/', ColorOrVariantExistsView.as_view(), name='color-exists' )
 ]
 

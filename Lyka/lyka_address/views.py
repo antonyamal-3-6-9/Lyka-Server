@@ -89,3 +89,17 @@ class StoreAddressRetriveView(APIView):
         else:
             return Response({"message" : "Unauthorised"}, status=status.HTTP_401_UNAUTHORIZED)
         
+
+class DeleteCustomerAddressView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    def delete(self, request, address_id):
+        try:
+            address = CustomerAddress.objects.get(id=address_id)
+            address.delete()
+            print("done")
+            return Response({"message" : "Address has been successfully deleted"}, status=status.HTTP_200_OK)
+        except CustomerAddress.DoesNotExist:
+            return Response({"message" : "Address not found"}, status=status.HTTP_400_BAD_REQUEST)
+        # except Exception as e:
+        #     return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

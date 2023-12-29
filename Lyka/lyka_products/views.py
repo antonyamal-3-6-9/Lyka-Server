@@ -247,33 +247,31 @@ class UnitListView(generics.ListAPIView):
 
 
 class LykaItemRootCategoryRetriveView(APIView):
-    def get(self, request):
+    def get(self, request, root):
         root = request.query_params.get("root")
         try:
             items = Unit.objects.filter(product__root_category__root_id=root)
             serializer = UnitRetriveSerializer(items, many=True)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Unit.DoesNotExist:
             return Response("Items not found", status=status.HTTP_404_NOT_FOUND)
 
 class LykaItemMainCategoryRetriveView(APIView):
-    def get (self, request):
-        main = request.query_params.get('main')
+    def get (self, request, main):
         try:
-            items = Unit.objects.filter(product__main_category__main_main_id=main)
+            items = Unit.objects.filter(product__main_category__main_id=main)
             data = UnitRetriveSerializer(items, many=True)
-            return Response(data.data)
+            return Response(data.data, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response("Product not found", status=status.HTTP_404_NOT_FOUND)
         
 
 class LykaItemSubCategoryRetriveView(APIView):
-    def get (self, request):
-        sub = request.query_params.get('sub')
+    def get (self, request, sub):
         try:
             items = Unit.objects.filter(product__sub_category__sub_id=sub)
             data = UnitRetriveSerializer(items, many=True)
-            return Response(data.data)
+            return Response(data.data, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
             return Response("Product not found", status=status.HTTP_404_NOT_FOUND)
         

@@ -10,9 +10,9 @@ urlpatterns = [
     path("create-customer-address/", CustomerAddressCreateView.as_view(), name='add-customer-address'),
     path("get-customer-address/", CustomerAddressListView.as_view(), name='get-customer-address'),
     path("get-customer-address/<int:address_id>/", CustomerAddressRetriveView.as_view(), name="get-customer-address-id"),
-    path("put-customer-address/<int:pk>/", CustomerAddressEditView.as_view(), name='put-customer-address')
+    path("put-customer-address/<int:pk>/", CustomerAddressEditView.as_view(), name='put-customer-address'),
+    path("delete-address/<int:address_id>/", DeleteCustomerAddressView.as_view(), name="delete-customer-address")
 ] 
-
 
 
 if settings.DEBUG:

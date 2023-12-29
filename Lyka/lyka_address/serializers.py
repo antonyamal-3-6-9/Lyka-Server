@@ -38,7 +38,7 @@ def is_valid_pincode(pincode, city, district):
 class CustomerAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerAddress
-        fields = ['name', 'street_one', 'street_two', 'city', 'state', 'country', 'phone', 'landmark', 'alternate_phone', 'zip_code', 'address_type']
+        fields = ['name', 'street_one', 'street_two', 'city', 'state', 'country', 'phone', 'landmark', 'alternate_phone', 'zip_code', 'address_type', 'district']
 
     def create(self, validated_data):
         zip_code = validated_data["zip_code"]
