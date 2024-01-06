@@ -66,7 +66,6 @@ class LykaUser(AbstractBaseUser, PermissionsMixin):
     otp = models.CharField(max_length=9, blank=True, null=True)
     first_name = models.CharField(max_length=50, null=True)
     last_name = models.CharField(max_length=50, null=True)
-
     
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -77,7 +76,7 @@ class LykaUser(AbstractBaseUser, PermissionsMixin):
     objects=LykaUserManager()
 
 
-    USERNAME_FIELD = 'phone'
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['role']
 
 
@@ -85,3 +84,17 @@ class LykaUser(AbstractBaseUser, PermissionsMixin):
 class BlacklistedToken(models.Model):
     token = models.CharField(max_length=500)
     blacklisted_at = models.DateTimeField(auto_now_add=True)
+
+
+class UserCreationAuth(models.Model):
+    CUSTOMER = 'customer'
+    SELLER = 'seller'
+    ADMIN = 'ADMIN'
+    USER_ROLES = [
+        (CUSTOMER, 'Customer'),
+        (SELLER, 'Seller'),
+        (ADMIN, 'Admin')
+    ]
+    email = models.CharField(max_length=50)
+    token = models.CharField(max_length=250)
+    role = models.CharField(max_length=50, choices=USER_ROLES)

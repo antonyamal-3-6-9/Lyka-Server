@@ -9,10 +9,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from lyka_user.models import BlacklistedToken
+from lyka_user.models import BlacklistedToken, UserCreationAuth
 from rest_framework.permissions import IsAuthenticated
 import random
 from sendgrid.helpers.mail import Mail
+import secrets, string
+
+
 
 def otp_generator():
     otp = random.randint(100000, 999999)
@@ -23,25 +26,92 @@ class CustomerExistsOrNot(APIView):
         if LykaUser.objects.role_exists_phone(phone=phone_number, role=LykaUser.CUSTOMER):
             return Response({"message" : "Customer already exists with the same number"}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({"message" : "Phone number is not used"}, status=status.HTTP_200_OK)
-        
-class PhoneLogin(APIView):
-    def post(self, request):
-        phone_number = request.data["phone"]
-        password = request.data["password"]
-        if LykaUser.objects.role_exists_phone(phone=phone_number, role=LykaUser.CUSTOMER):
-            user = LykaUser.objects.get(phone=phone_number, role=LykaUser.CUSTOMER)
-            if user.check_password(password):
-                refresh = RefreshToken.for_user(user)
-                access = str(refresh.access_token)
-                return Response({"token" : access}, status=status.HTTP_200_OK)
-            else:
-                return Response({"message" : "invalid password"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"message" : "Customer doesn't exist with the given number"}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response({"message" : "Phone number is not used"}, status=status.HTTP_200_OK)  
 
-class EmailLogin(APIView):
+
+def generate_token():
+    token = secrets.token_hex(6).upper()
+    return token
+
+
+class CustomerRequestView(APIView):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerCreateSerializer
+
+    def get(self, request, email, *args, **kwargs):
+        try:
+            if LykaUser.objects.role_exists_email(email=email, role=LykaUser.CUSTOMER):
+                return Response({"message" : "User Already Exists"}, status=status.HTTP_208_ALREADY_REPORTED)
+            
+            customer_auth = UserCreationAuth.objects.create(email = email, role = UserCreationAuth.CUSTOMER)
+            customer_auth.token = generate_token()
+            customer_auth.save()
+            message = Mail(
+                    from_email='sclera.prog@gmail.com',
+                    to_emails=email,
+                    subject='Lyka User Verification',
+                    html_content = f"<div><p>Please click on the below link to verify your email and set a password</p><a href=http://localhost:3000/customer/auth/verify/{customer_auth.email}/{customer_auth.token}>http://localhost:3000/customer/auth/verify/{customer_auth.email}/{customer_auth.token}</a></div>"
+
+                )
+            sg = SendGridAPIClient(settings.SEND_GRID_KEY)
+            response = sg.send(message)
+            print(response)
+            if response.status_code == 202:
+                return Response({"message" : f"Verification link has been send to {customer_auth.email}"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"message" : "Error sending link"}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def patch(self, request):
+        try:
+            email = request.data["email"]
+            token = request.data["token"]
+            if UserCreationAuth.objects.filter(email=email, role=LykaUser.CUSTOMER).exists():
+                usercreation_auth = UserCreationAuth.objects.get(email=email, role=LykaUser.CUSTOMER)
+                if usercreation_auth.token == token:
+                    return Response({"message" : "Email Successfully Verified"}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"message" : "Verification Link Expired"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+
+class CustomerCreateView(APIView):
+    serializer_class = CustomerUserSerializer
+    queryset = LykaUser.objects.all()
+    def post(self, request):
+        try:
+            email = request.data["email"]
+            password = request.data["password"]
+            token = request.data["token"]
+
+            if UserCreationAuth.objects.filter(email=email, token=token, role=LykaUser.CUSTOMER).exists():
+                if not LykaUser.objects.role_exists_email(email=email, role=LykaUser.CUSTOMER):
+                    user =self.serializer_class(data=email)
+                    customer = Customer.objects.create(user=user)
+                    user.set_password(password)
+                    usercreation_auth = UserCreationAuth.objects.get(email=email, token=token, role=LykaUser.CUSTOMER)
+                    usercreation_auth.delete()
+                    refresh = RefreshToken.for_user(user)
+                    access_token = str(refresh.access_token)
+                    if access_token:
+                        return Response({"token" : access_token}, status=status.HTTP_200_OK)
+                    else:
+                        return Response({"message" : "token generation failed"}, status.HTTP_408_REQUEST_TIMEOUT)
+                else:
+                    return Response({"message" : " customer does not exist"}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                return Response({"message" : "Verification link expired"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except UserCreationAuth.DoesNotExist:
+            return Response({"message" : "Link expired"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        except LykaUser.DoesNotExist:
+            return Response({"message" : "Invalid Customer"}, status=status.HTTP_404_NOT_FOUND)
+            
+
+class PasswordLoginView(APIView):
     def get(self, request):
         email = request.data["email"]
         password = request.data["password"]
@@ -55,87 +125,69 @@ class EmailLogin(APIView):
                 return Response({"message" : "invalid password"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"message" : "Customer doesn't exist with the given email"}, status=status.HTTP_404_NOT_FOUND)
-
-class PhoneOtpLogin(APIView):
-    def get(self, request, phone):
-        if LykaUser.objects.role_exists_phone(phone=phone, role=LykaUser.CUSTOMER):
-            user = LykaUser.objects.get(phone=phone, role=LykaUser.CUSTOMER)
-            new_otp = otp_generator()
-            user.otp = new_otp
-            user.save()
-            print(new_otp)
-            if user:
-                return Response({"message" : "success"}, status=status.HTTP_200_OK)
-            else:
-                return Response({"message" : "failed"}, status=status.HTTP_400_BAD_REQUEST)
-            # url = f"https://2factor.in/API/V1/{settings.OTP_AUTH_TOKEN}/SMS/+91{phone}/{new_otp}/OTP1"
-            # response = requests.request("GET", url)
-            # if response.status_code == 200:
-            #     return Response({"message" : "success"}, status=status.HTTP_200_OK)
-            # else:
-            #     print(response)
-            #     return Response({"message" : "failed"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"message" : "Customer doesn't exist with the given number"}, status=status.HTTP_404_NOT_FOUND)
         
-    def post(self, request):
-        phone = request.data["phone"]
-        user_typed_code = request.data["user_typed_code"]
-        user = LykaUser.objects.get(phone=phone, role=LykaUser.CUSTOMER)
-        if user is not None:
-                if user.otp == user_typed_code:
-                    user.otp = None
-                    user.save()
-                    refresh = RefreshToken.for_user(user)
-                    access = str(refresh.access_token)
-                    return Response({"token" : access}, status=status.HTTP_200_OK)
+class OtpLoginView(APIView):
+    def otp_generator(self):
+        otp = random.randint(100000, 999999)
+        return str(otp)
+
+    def get(self, request, email):
+        try:
+            verification_code = None
+            if LykaUser.objects.role_exists_email(email=email, role=LykaUser.CUSTOMER):
+                if CustomerOtp.objects.filter(verification_credential=email).exists():
+                    verification_code = CustomerOtp.objects.get(
+                        verification_credential=email)
+                    verification_code.code = self.otp_generator()
+                    verification_code.save()
                 else:
-                    return Response({"message" : "invalid otp"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"message" : "user doesn't exist with this number"}, status=status.HTTP_404_NOT_FOUND)
-        
-class CustomerOtpView(APIView): 
-    def get(self, request, phone):
-        if not LykaUser.objects.role_exists_phone(phone=phone, role=LykaUser.CUSTOMER):
-            new_otp = otp_generator()
-            otp, created = CustomerOtp.objects.get_or_create(verification_credential=phone)
-            otp.code = new_otp
-            otp.save()
-            print(new_otp)
-            if otp:
-                return Response({"message" : "success"}, status=status.HTTP_200_OK)
+                    verification_code = CustomerOtp.objects.create(
+                        verification_credential=email, code=self.otp_generator())
+                message = Mail(
+                        from_email='sclera.prog@gmail.com',
+                        to_emails=email,
+                        subject='Lyka OTP Verification',
+                        html_content=f'<strong>Your Verification code is <h3>{verification_code.code}</h3></strong>'
+                    )
+                print(message)
+                sg = SendGridAPIClient(self.auth_token)
+                response = sg.send(message)
+                print(response.status_code)
+                if response.status_code == 202:
+                    return Response({"message": "OTP Send successfully"}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"message": "OTP creation failed"}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response({"message" : "failed"}, status=status.HTTP_400_BAD_REQUEST)
-            # url = f"https://2factor.in/API/V1/{settings.OTP_AUTH_TOKEN}/SMS/+91{phone}/{new_otp}/OTP1"
-            # response = requests.request("GET", url)
-            # if response.status_code == 200:
-            #     return Response({"message" : "success"}, status=status.HTTP_200_OK)
-            # else:
-            #     print(response)
-            #     return Response({"message" : "failed"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"message" : "Customer doesn't exist with the given number"}, status=status.HTTP_404_NOT_FOUND)
-        
+                return Response({"message" : "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Customer.DoesNotExist:
+            return Response({"message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
     def post(self, request):
-        phone = request.data["phone"]
-        user_typed_code = request.data["user_typed_code"]
-        otp = CustomerOtp.objects.get(verification_credential=phone)
-        if otp.code == user_typed_code:
-            return Response({"message" : 'Success'}, status=status.HTTP_200_OK)
-        else:
-            return Response({"message" : "invalid otp"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user_typed_code = request.data["otp"]
+            email = request.data["email"]
 
-        
-
-class CustomerCreateView(generics.ListCreateAPIView):
-    queryset = Customer.objects.all()
-    serializer_class = CustomerCreateSerializer
-
-
+            verification_code = CustomerOtp.objects.get(
+                verification_credential=email)
+            
+            if verification_code.code == user_typed_code:
+                user = LykaUser.objects.get_or_4(email=email, role=LykaUser.CUSTOMER)
+                verification_code.delete()
+                refresh = RefreshToken.for_user(user)
+                access = str(refresh.access)
+                return Response({"token" : access}, status=status.HTTP_200_OK)
+            else:
+                return Response({"message": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST)
+        except Customer.DoesNotExist:
+            return Response({"message" : "Unauthorised"}, status=status.HTTP_401_UNAUTHORIZED)
+        except CustomerOtp.DoesNotExist:
+            return Response({"otp not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class EmailOtpVerificationView(APIView):
-    auth_token = "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"
-
     def otp_generator(self):
         otp = random.randint(100000, 999999)
         return str(otp)
@@ -154,7 +206,7 @@ class EmailOtpVerificationView(APIView):
             message = Mail(
                     from_email='sclera.prog@gmail.com',
                     to_emails=to_email,
-                    subject='Lyka Verification',
+                    subject='Lyka OTP Verification',
                     html_content=f'<strong>Your Verification code is <h3>{verification_code.code}</h3></strong>'
                 )
             print(message)
@@ -185,6 +237,10 @@ class EmailOtpVerificationView(APIView):
                 return Response({"message": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST)
         except Customer.DoesNotExist:
             return Response({"message" : "Unauthorised"}, status=status.HTTP_401_UNAUTHORIZED)
+        except CustomerOtp.DoesNotExist:
+            return Response({"otp not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class IsCustomerLoggedInOrNot(APIView):

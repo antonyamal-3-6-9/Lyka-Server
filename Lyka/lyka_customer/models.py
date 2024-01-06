@@ -20,4 +20,6 @@ class CustomerReview(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     review = models.TextField(max_length=500)
     rating = models.DecimalField(max_digits=1, decimal_places=0)
+
+
     

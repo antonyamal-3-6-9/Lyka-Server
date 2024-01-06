@@ -9,14 +9,14 @@ class CustomerUserSerializer(serializers.ModelSerializer):
     role = serializers.CharField(read_only=True)
     class Meta:
         model = LykaUser
-        fields = ['phone','role']
+        fields = ['email','role']
 
     def create(self, validated_data):
         try:
-            phone = validated_data.pop('phone')
-            if LykaUser.objects.role_exists_phone(phone=phone, role=LykaUser.CUSTOMER):
+            email = validated_data.pop('email')
+            if LykaUser.objects.role_exists_phone(phone=email, role=LykaUser.CUSTOMER):
                 raise ValidationError("Customer already exists with same number")
-            user = LykaUser.objects.create_user(phone=phone, role=LykaUser.CUSTOMER)
+            user = LykaUser.objects.create_user(phone=email, role=LykaUser.CUSTOMER)
             return user
         except ObjectDoesNotExist:
             raise ValidationError("An error occured during the Customer Creation")
@@ -29,13 +29,15 @@ class CustomerCreateSerializer(serializers.ModelSerializer):
         fields = ['user']
 
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user_serializer = CustomerUserSerializer(data=user_data)
-        user_serializer.is_valid(raise_exception=True)
-        user = user_serializer.save()
-
-        customer = Customer.objects.create(user=user)
-        return customer
+        try:
+            user_data = validated_data.pop('user')
+            user_serializer = CustomerUserSerializer(data=user_data)
+            user_serializer.is_valid(raise_exception=True)
+            user = user_serializer.save()
+            customer = Customer.objects.create(user=user)
+            return customer
+        except ObjectDoesNotExist:
+            raise ValidationError("Try Again Later")
 
 
 class CustomerUserUpdateSerializer(serializers.ModelSerializer):
