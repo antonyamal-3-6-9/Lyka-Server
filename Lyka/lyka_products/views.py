@@ -248,7 +248,6 @@ class UnitListView(generics.ListAPIView):
 
 class LykaItemRootCategoryRetriveView(APIView):
     def get(self, request, root):
-        root = request.query_params.get("root")
         try:
             items = Unit.objects.filter(product__root_category__root_id=root)
             serializer = UnitRetriveSerializer(items, many=True)

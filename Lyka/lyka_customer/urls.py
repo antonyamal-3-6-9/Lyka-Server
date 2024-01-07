@@ -4,10 +4,10 @@ from django.conf.urls.static import static
 from .views import *
 
 urlpatterns = [
-    path("auth/<str:email>/", CustomerRequestView.as_view(), name="create-link"),
+    path("auth/begin/<str:email>/", CustomerRequestView.as_view(), name="create-link"),
     path("auth/verify-link/", CustomerRequestView.as_view(), name="verify-link"),
     path("create/", CustomerCreateView.as_view(), name="customer-verify"),
-    path('is-loggedin/', IsCustomerLoggedInOrNot.as_view(), name="is-logged-in"),
+    path('is-logged-in/', IsCustomerLoggedInOrNot.as_view(), name="is-logged-in"),
     path('customer-exists-or-not/<int:phone_number>/', CustomerExistsOrNot.as_view(), name="customer-exists"),
     path('password-login/', PasswordLoginView.as_view(), name="password-login"),
     path('otp-login-create/<str:email>/', OtpLoginView.as_view(), name="otp-login-create"),

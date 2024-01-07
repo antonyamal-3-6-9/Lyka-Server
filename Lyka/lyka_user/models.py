@@ -5,9 +5,9 @@ from django.core.exceptions import ObjectDoesNotExist
 # Create your models here.
 
 class LykaUserManager(BaseUserManager):
-    def create_user(self, phone, role, password=None, email=None, **extra_fields):
-        if not phone:
-            raise ValueError('The Phone Number field must be set')
+    def create_user(self, email, role, password=None, phone=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
         if not role:
             raise ValueError('The Role field must be set')
 
@@ -22,10 +22,10 @@ class LykaUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, phone, password=None, role=None, **extra_fields):
+    def create_superuser(self, email, password=None, role=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        return self.create_user(phone=phone, role=role, password=password,**extra_fields)
+        return self.create_user(email=email, role=role, password=password,**extra_fields)
     
     def get(self, **kwargs):
         try:
@@ -58,8 +58,8 @@ class LykaUser(AbstractBaseUser, PermissionsMixin):
         (ADMIN, 'Admin')
     ]
 
-    email = models.EmailField(max_length=255)
-    phone = models.CharField(max_length=10)
+    email = models.EmailField(max_length=60)
+    phone = models.CharField(max_length=10, null=True)
     is_customer = models.BooleanField(null=True)
     is_seller = models.BooleanField(null=True)
     role = models.CharField(max_length=10, choices=USER_ROLES)
