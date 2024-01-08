@@ -93,7 +93,15 @@ CORS_ALLOW_HEADERS = [
     'Content-Type'
 ]
 
-BROKER_URL = 'amqp://guest:guest@localhost:5672/' 
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+
+
+# BROKER_URL = 'amqp://guest:guest@localhost:5672/' 
 
 ROOT_URLCONF = 'Lyka.urls'
 
@@ -142,7 +150,7 @@ DATABASES = {
     }
 }
 
-CELERY_RESULT_BACKEND = 'db+postgresql://postgres:root@localhost:5432/Lyka'
+# CELERY_RESULT_BACKEND = 'db+postgresql://postgres:root@localhost:5432/Lyka'
 
 # CHANNEL_LAYERS = {
 #     'default': {
@@ -154,11 +162,22 @@ CELERY_RESULT_BACKEND = 'db+postgresql://postgres:root@localhost:5432/Lyka'
 # }
 
 
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': "channels.layers.InMemoryChannelLayer"
+#     }
+# }
+
+
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': "channels.layers.InMemoryChannelLayer"
-    }
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
 }
+
 
 
 
@@ -227,15 +246,3 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 
-OTP_AUTH_TOKEN = "8b7ecbf5-0cfd-11ee-addf-0200cd936042"
-
-RAZORPAY_API_KEY = "rzp_test_R79QGigrBUV08W"
-RAZORPAY_API_SECRET = "E8vVAje6KvZgiFaP6z8E4wPw"
-
-EASYPOST_API_KEY = "EZTKb48cb65bc5354fc18d42b1e73e6741ca5UwJpl0kXIqfpprz0x4elw"
-
-PAYPAL_CLIENT_ID = "AYQ78uXRJKJsvFWNX49FPhjxCGJ-0NNx7YooDZ4Tml6h53XKYfdcqiwSUG_1TZrJbhJ2nIqS8DafBuzB"
-PAYPAL_CLIENT_SECRET = "EAw2mG3kU-idbk79SbkXHcFZ4U81LHMYy9pK1jh_utgfAzo6JoKeOPNMkltMjaiZJIrmCJeDbngZwLN6"
-
-STRIPE_API_KEY = "sk_test_51NNgMcSFoVzzDNdPTrQ2slu3CU6K7MFAwVpH3jTmtrG908AFQqMmPZlRHNNsSsXPSbRWj6RarUOI0leQfXFHQYr900EttvNCJg"
-SEND_GRID_KEY = "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"

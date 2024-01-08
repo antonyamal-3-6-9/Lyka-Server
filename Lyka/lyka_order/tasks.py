@@ -10,7 +10,6 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
 def send_order_update_notification(user_id, message):
-    print("Order Noti Send")
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         f'user_{user_id}',
@@ -56,6 +55,11 @@ def update_transaction(order):
     return True
 
 @shared_task
+def printingTask():
+    print("hy")
+    send_order_update_notification(11, "hy Da")
+
+@shared_task
 def updating_order():
     accepted_orders = Order.objects.filter(order_status="Accepted")
     pickedup_orders = Order.objects.filter(order_status="Picked Up")
@@ -95,6 +99,7 @@ def updating_order():
 
 
     for order in in_transit_orders:
+        print("hy order")
         order_time_naive = order.time
         shipping_time = order_time_naive + timedelta(minutes=15)
 

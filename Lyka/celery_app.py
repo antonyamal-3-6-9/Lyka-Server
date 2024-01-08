@@ -1,9 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 import os
-from celery import Celery, shared_task
-from datetime import timedelta
-
-
+from celery import Celery
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Lyka.settings')
 
@@ -18,6 +15,10 @@ app.conf.beat_schedule = {
         'task': 'lyka_order.tasks.updating_order',
         'schedule': 1000, 
     },
+    'debugging' : {
+        'task' : 'lyka_order.tasks.printingTask',
+        'schedule' : 10,
+    }
 }
 app.conf.broker_connection_retry_on_startup = True
 

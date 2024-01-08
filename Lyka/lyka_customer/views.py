@@ -298,8 +298,8 @@ class CustomerProfileRetriveView(APIView):
             return Response(user_serializer.data, status=status.HTTP_200_OK)
         except LykaUser.DoesNotExist:
             return Response({"user doesn't exist with the given phone number"}, status=status.HTTP_404_NOT_FOUND)
-        # except Exception as e:
-        #     return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
 
 
