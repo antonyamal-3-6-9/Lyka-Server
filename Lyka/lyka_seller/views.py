@@ -73,13 +73,13 @@ class PhoneOtpLogin(APIView):
         user = LykaUser.objects.get(phone=phone_number, role=LykaUser.SELLER)
         if user is not None:
             new_otp = otp_generator()
-            user.old_password = new_otp
+            user.otp = new_otp
             user.save()
-            phone_number = f'+91{phone_number}'
-            url = f"https://2factor.in/API/V1/{settings.OTP_AUTH_TOKEN}/SMS/{phone_number}/{new_otp}/OTP1"
-            response = requests.request("GET", url)
-            print(response)
-            if response.status_code == 200:
+            # phone_number = f'+91{phone_number}'
+            # url = f"https://2factor.in/API/V1/{settings.OTP_AUTH_TOKEN}/SMS/{phone_number}/{new_otp}/OTP1"
+            # response = requests.request("GET", url)
+            print(new_otp)
+            if new_otp:
                 return Response({"message": "OTP has been send"}, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "OTP creation failed"}, status=status.HTTP_400_BAD_REQUEST)
@@ -91,7 +91,7 @@ class PhoneOtpLogin(APIView):
         user_typed_otp = request.data['user_otp']
         user = LykaUser.objects.get(phone=phone_number, role=LykaUser.SELLER)
         if user is not None:
-            if user.old_password == user_typed_otp:
+            if user.otp == user_typed_otp:
                 refresh = RefreshToken.for_user(user)
                 access_token = str(refresh.access_token)
                 return Response({'token': access_token}, status=status.HTTP_200_OK)

@@ -14,6 +14,8 @@ from rest_framework.permissions import IsAuthenticated
 import random
 from sendgrid.helpers.mail import Mail
 import secrets, string
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 
@@ -244,11 +246,12 @@ class EmailOtpVerificationView(APIView):
 class IsCustomerLoggedInOrNot(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
         user = request.user
         print(user.role)
         if user.role == LykaUser.CUSTOMER:
-            return Response({"name" : user.first_name}, status=status.HTTP_200_OK)
+            return Response({"name" : user.first_name, "id" : user.id}, status=status.HTTP_200_OK)
         else:
             return Response({"message" : "User not logged in"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -277,15 +280,26 @@ class CustomerProfileRetriveView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
+    def send_notification(self, user_id, message):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'user_{user_id}',
+            {
+                'type': 'send_confirmation',
+                'message': message,
+            }
+        )
+
     def get(self, request):
         try:
             customer = Customer.objects.get(user=request.user)
+            self.send_notification(user_id=customer.user.id, message="Hy user")
             user_serializer = CustomerRetriveSerializer(customer, many=False)
             return Response(user_serializer.data, status=status.HTTP_200_OK)
         except LykaUser.DoesNotExist:
             return Response({"user doesn't exist with the given phone number"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # except Exception as e:
+        #     return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
 
 

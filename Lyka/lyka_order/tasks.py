@@ -1,11 +1,25 @@
 from .models import Order
-from datetime import timedelta, datetime
+from datetime import timedelta
 from django.utils import timezone
 from celery import shared_task
 from lyka_payment.models import OrderTransaction
 import string
 import random
 import time
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+def send_order_update_notification(user_id, message):
+    print("Order Noti Send")
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f'user_{user_id}',
+        {
+            'type': 'send_order_update',
+            'message': message,
+            'user_id' : user_id
+        }
+    )
 
 
 
@@ -49,41 +63,52 @@ def updating_order():
     shipped_orders = Order.objects.filter(order_status="Shipped")
     return_requested_orders = Order.objects.filter(order_status="Return Requested")
     return_picked_up_orders = Order.objects.filter(order_status="Picked Up for Return")
-    current_time = datetime.now()  
+    current_time = timezone.now()  
 
     for order in accepted_orders:
-        order_time_naive = order.time.astimezone(timezone.utc).replace(tzinfo=None) 
+        order_time_naive = order.time
         pick_up_time = order_time_naive + timedelta(minutes=15)
-
+        print(order.time.tzinfo)
 
         if current_time > pick_up_time:
             order.order_status = "Picked Up"
             order.time = current_time
             order.save()
-            print(f'{order.order_id} has been Picked up')
+            message = f'Your order {order.order_id} has been Picked up'
+            print(message)
+            send_order_update_notification(order.customer.user.id, message)
+            send_order_update_notification(order.seller.user.id, message)
+
 
     for order in pickedup_orders:
-        order_time_naive = order.time.astimezone(timezone.utc).replace(tzinfo=None) 
+        order_time_naive = order.time
         transist_time = order_time_naive + timedelta(minutes=15)
 
         if current_time > transist_time:
             order.order_status = "In Transit"
             order.time = current_time
             order.save()
-            print(f'{order.order_id} has been In Transit')
+            message = f'Your order {order.order_id} id In Transist'
+            print(message)
+            send_order_update_notification(order.customer.user.id, message)
+            send_order_update_notification(order.seller.user.id, message)
+
 
     for order in in_transit_orders:
-        order_time_naive = order.time.astimezone(timezone.utc).replace(tzinfo=None) 
+        order_time_naive = order.time
         shipping_time = order_time_naive + timedelta(minutes=15)
 
         if current_time > shipping_time:
             order.order_status = "Shipped"
             order.time = current_time
             order.save()
-            print(f'{order.order_id} has been Shipped')
+            message = f'Your order {order.order_id} has been shipped'
+            print(message)
+            send_order_update_notification(order.customer.user.id, message)
+            send_order_update_notification(order.seller.user.id, message)
 
     for order in shipped_orders:
-        order_time_naive = order.time.astimezone(timezone.utc).replace(tzinfo=None) 
+        order_time_naive = order.time
         delivery_time = order_time_naive + timedelta(minutes=15)
 
         if current_time > delivery_time:
@@ -91,22 +116,28 @@ def updating_order():
             order.time = current_time
             order.save()
             if generate_transaction(order=order):
-                print(f'{order.order_id} has been Delivered')
+                message = f'Your order {order.order_id} has been shipped'
+                print(message)
+                send_order_update_notification(order.customer.user.id, message)
+                send_order_update_notification(order.seller.user.id, message)
 
 
     for order in return_requested_orders:
-        order_time_naive = order.time.astimezone(timezone.utc).replace(tzinfo=None) 
+        order_time_naive = order.time
         requested_time = order_time_naive + timedelta(minutes=15)
 
         if current_time > requested_time:
             order.order_status = "Picked Up for Return"
             order.time = current_time
             order.save()
-            print(f'{order.order_id} has been picked up for return')
+            message = f'Your order {order.order_id} has been Picked up for return'
+            print(message)
+            send_order_update_notification(order.customer.user.id, message)
+            send_order_update_notification(order.seller.user.id, message)
 
 
     for order in return_picked_up_orders:
-        order_time_naive = order.time.astimezone(timezone.utc).replace(tzinfo=None) 
+        order_time_naive = order.time
         pick_up_time = order_time_naive + timedelta(minutes=30)
 
         if current_time > pick_up_time:
@@ -114,5 +145,8 @@ def updating_order():
             order.time = current_time
             order.save()
             if update_transaction(order):
-                print(f'{order.order_id} has been returned successfully')
+                message = f'Your order {order.order_id} has been Returned Successfully'
+                print(message)
+                send_order_update_notification(order.customer.user.id, message)
+                send_order_update_notification(order.seller.user.id, message)
 

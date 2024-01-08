@@ -547,7 +547,8 @@ class OrderAcceptOrReject(APIView):
             order_status = request.data["status"]
             seller = Seller.objects.get(user=request.user)
             order = Order.objects.get(order_id=order_id, seller=seller)
-            if order_status == "Placed":
+            print(request.data)
+            if order_status == "Accepted":
                 order.order_status = "Accepted"
                 order. credentials.tracking_id = self.generate_unique_tracking_number()
                 order.credentials.save()

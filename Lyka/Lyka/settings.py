@@ -14,6 +14,7 @@ from datetime import timedelta
 import os
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -33,6 +34,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django_celery_results',
     'django_celery_beat',
     'rest_framework',
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     'lyka_products',
     'lyka_seller',
     'lyka_user',
+    'channels',
     'rest_framework_simplejwt',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -67,16 +70,19 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'middleware.TokenBlacklistMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'middleware.TokenBlacklistMiddleware'
 ]
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 CORS_EXPOSE_HEADERS = [
     'Authorization',
@@ -108,6 +114,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Lyka.wsgi.application'
+ASGI_APPLICATION = 'Lyka.routing.application'
 
 
 SIMPLE_JWT = {
@@ -136,6 +143,22 @@ DATABASES = {
 }
 
 CELERY_RESULT_BACKEND = 'db+postgresql://postgres:root@localhost:5432/Lyka'
+
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_rabbitmq.core.RabbitmqChannelLayer',
+#         'CONFIG': {
+#             "URL": "amqp://guest:guest@localhost:5672//",
+#         },
+#     },
+# }
+
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': "channels.layers.InMemoryChannelLayer"
+    }
+}
 
 
 
@@ -190,6 +213,8 @@ CELERY_ALWAYS_EAGER = True
 
 STATIC_URL = 'static/'
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -213,4 +238,4 @@ PAYPAL_CLIENT_ID = "AYQ78uXRJKJsvFWNX49FPhjxCGJ-0NNx7YooDZ4Tml6h53XKYfdcqiwSUG_1
 PAYPAL_CLIENT_SECRET = "EAw2mG3kU-idbk79SbkXHcFZ4U81LHMYy9pK1jh_utgfAzo6JoKeOPNMkltMjaiZJIrmCJeDbngZwLN6"
 
 STRIPE_API_KEY = "sk_test_51NNgMcSFoVzzDNdPTrQ2slu3CU6K7MFAwVpH3jTmtrG908AFQqMmPZlRHNNsSsXPSbRWj6RarUOI0leQfXFHQYr900EttvNCJg"
-SEND_GRID_KEY = "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"
+SEND_GRID_KEY = "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"

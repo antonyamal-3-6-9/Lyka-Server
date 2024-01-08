@@ -23,9 +23,10 @@ def is_valid_pincode(pincode, city, district):
     data = response.json()
     status = data[0]['Status']
 
+
     if status == "Success":
         if data[0]["PostOffice"][0]["District"] == district:
-            if data[0]["PostOffice"][0]["Block"] == city:
+            if data[0]["PostOffice"][0]["Name"] == city:  
                 return "success"
             else:
                 return "city-error"
