@@ -1,15 +1,29 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.core.exceptions import ObjectDoesNotExist
+import random
+import string
 
 # Create your models here.
 
+def numberGenerator():
+    characters = string.ascii_letters + string.digits
+    unique_id = ''.join(random.choice(characters) for _ in range(5))
+    return unique_id
+
+
+
 class LykaUserManager(BaseUserManager):
-    def create_user(self, email, role, password=None, phone=None, **extra_fields):
+    def create_user(self, email, role, password=None, phone=None, first_name = None, last_name=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
         if not role:
             raise ValueError('The Role field must be set')
+        
+        if not first_name:
+            first_name = "Customer"
+        if not last_name:
+            last_name = numberGenerator()
 
         email = self.normalize_email(email)
         user = self.model(
@@ -98,3 +112,10 @@ class UserCreationAuth(models.Model):
     email = models.CharField(max_length=50)
     token = models.CharField(max_length=250)
     role = models.CharField(max_length=50, choices=USER_ROLES)
+
+
+
+class Notification(models.Model):
+    owner = models.ForeignKey(LykaUser, on_delete=models.CASCADE)
+    message = models.TextField(max_length=500)
+    time = models.DateTimeField(auto_now_add=True)

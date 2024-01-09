@@ -2,7 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 
-class NotificationConsumer(AsyncWebsocketConsumer):
+class NotificationPrivateConsumer(AsyncWebsocketConsumer):
 
     connected_users = {} 
 
@@ -26,11 +26,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def send_order_update(self, event):
         message = event['message']
-        user_id = event["user_id"]
+        time = event["time"]
         print("Consumers")
-        await self.send(text_data=json.dumps({'message': message}))
+        await self.send(text_data=json.dumps({'message': message , 'time' : time}))
 
-    async def send_confirmation(self, event):
+    async def send_greetings(self, event):
         message = event['message']
-        print("Running")
-        await self.send(text_data=json.dumps({"message" : message}))
+        await self.send(text_data=json.dumps({"message" : message, "time" : "12 PM"}))
+

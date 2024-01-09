@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.utils import timezone
 from celery import shared_task
 from lyka_payment.models import OrderTransaction
+from lyka_user.models import Notification
 import string
 import random
 import time
@@ -14,9 +15,8 @@ def send_order_update_notification(user_id, message):
     async_to_sync(channel_layer.group_send)(
         f'user_{user_id}',
         {
-            'type': 'send_order_update',
+            'type': 'send_greetings',
             'message': message,
-            'user_id' : user_id
         }
     )
 
@@ -54,10 +54,6 @@ def update_transaction(order):
     transaction.save()
     return True
 
-@shared_task
-def printingTask():
-    print("hy")
-    send_order_update_notification(11, "hy Da")
 
 @shared_task
 def updating_order():
@@ -71,87 +67,90 @@ def updating_order():
 
     for order in accepted_orders:
         order_time_naive = order.time
-        pick_up_time = order_time_naive + timedelta(minutes=15)
+        pick_up_time = order_time_naive + timedelta(minutes=2)
         print(order.time.tzinfo)
 
         if current_time > pick_up_time:
             order.order_status = "Picked Up"
             order.time = current_time
             order.save()
-            message = f'Your order {order.order_id} has been Picked up'
-            print(message)
-            send_order_update_notification(order.customer.user.id, message)
-            send_order_update_notification(order.seller.user.id, message)
+            message = f'Your order {order.item.product.brand} {order.item.product.name} of {order.order_id} has been {order.order_status}'
+            notification_c = Notification.objects.create(owner=order.customer.user, message=message)
+            notification_s = Notification.objects.create(owner=order.seller.user, message=message)
+            send_order_update_notification(order.customer.user.id, notification_c.message, time=str(notification_c.time))
+            send_order_update_notification(order.seller.user.id, notification_s.message, time=str(notification_s.time))
 
 
     for order in pickedup_orders:
         order_time_naive = order.time
-        transist_time = order_time_naive + timedelta(minutes=15)
+        transist_time = order_time_naive + timedelta(minutes=2)
 
         if current_time > transist_time:
-            order.order_status = "In Transit"
-            order.time = current_time
-            order.save()
-            message = f'Your order {order.order_id} id In Transist'
-            print(message)
-            send_order_update_notification(order.customer.user.id, message)
-            send_order_update_notification(order.seller.user.id, message)
-
-
-    for order in in_transit_orders:
-        print("hy order")
-        order_time_naive = order.time
-        shipping_time = order_time_naive + timedelta(minutes=15)
-
-        if current_time > shipping_time:
             order.order_status = "Shipped"
             order.time = current_time
             order.save()
-            message = f'Your order {order.order_id} has been shipped'
-            print(message)
-            send_order_update_notification(order.customer.user.id, message)
-            send_order_update_notification(order.seller.user.id, message)
+            message = f'Your order {order.item.product.brand} {order.item.product.name} of {order.order_id} has been {order.order_status}'
+            notification_c = Notification.objects.create(owner=order.customer.user, message=message)
+            notification_s = Notification.objects.create(owner=order.seller.user, message=message)
+            send_order_update_notification(order.customer.user.id, notification_c.message, time=str(notification_c.time))
+            send_order_update_notification(order.seller.user.id, notification_s.message, time=str(notification_s.time))
+
+    for order in in_transit_orders:
+        order_time_naive = order.time
+        shipping_time = order_time_naive + timedelta(minutes=2)
+
+        if current_time > shipping_time:
+            order.order_status = "In Transist"
+            order.time = current_time
+            order.save()
+            message = f'Your order {order.item.product.brand} {order.item.product.name} of {order.order_id} has been {order.order_status}'
+            notification_c = Notification.objects.create(owner=order.customer.user, message=message)
+            notification_s = Notification.objects.create(owner=order.seller.user, message=message)
+            send_order_update_notification(order.customer.user.id, notification_c.message, time=str(notification_c.time))
+            send_order_update_notification(order.seller.user.id, notification_s.message, time=str(notification_s.time))
 
     for order in shipped_orders:
         order_time_naive = order.time
-        delivery_time = order_time_naive + timedelta(minutes=15)
+        delivery_time = order_time_naive + timedelta(minutes=2)
 
         if current_time > delivery_time:
             order.order_status = "Delivered"
             order.time = current_time
             order.save()
             if generate_transaction(order=order):
-                message = f'Your order {order.order_id} has been shipped'
-                print(message)
-                send_order_update_notification(order.customer.user.id, message)
-                send_order_update_notification(order.seller.user.id, message)
-
+                message = f'Your order {order.item.product.brand} {order.item.product.name} of {order.order_id} has been {order.order_status}'
+                notification_c = Notification.objects.create(owner=order.customer.user, message=message)
+                notification_s = Notification.objects.create(owner=order.seller.user, message=message)
+                send_order_update_notification(order.customer.user.id, notification_c.message, time=str(notification_c.time))
+                send_order_update_notification(order.seller.user.id, notification_s.message, time=str(notification_s.time))
 
     for order in return_requested_orders:
         order_time_naive = order.time
-        requested_time = order_time_naive + timedelta(minutes=15)
+        requested_time = order_time_naive + timedelta(minutes=2)
 
         if current_time > requested_time:
             order.order_status = "Picked Up for Return"
             order.time = current_time
             order.save()
-            message = f'Your order {order.order_id} has been Picked up for return'
-            print(message)
-            send_order_update_notification(order.customer.user.id, message)
-            send_order_update_notification(order.seller.user.id, message)
+            message = f'Your order {order.item.product.brand} {order.item.product.name} of {order.order_id} has been {order.order_status}'
+            notification_c = Notification.objects.create(owner=order.customer.user, message=message)
+            notification_s = Notification.objects.create(owner=order.seller.user, message=message)
+            send_order_update_notification(order.customer.user.id, notification_c.message, time=str(notification_c.time))
+            send_order_update_notification(order.seller.user.id, notification_s.message, time=str(notification_s.time))
 
 
     for order in return_picked_up_orders:
         order_time_naive = order.time
-        pick_up_time = order_time_naive + timedelta(minutes=30)
+        pick_up_time = order_time_naive + timedelta(minutes=2)
 
         if current_time > pick_up_time:
             order.order_status = "Returned"
             order.time = current_time
             order.save()
             if update_transaction(order):
-                message = f'Your order {order.order_id} has been Returned Successfully'
-                print(message)
-                send_order_update_notification(order.customer.user.id, message)
-                send_order_update_notification(order.seller.user.id, message)
+                message = f'Your order {order.item.product.brand} {order.item.product.name} of {order.order_id} has been {order.order_status}'
+                notification_c = Notification.objects.create(owner=order.customer.user, message=message)
+                notification_s = Notification.objects.create(owner=order.seller.user, message=message)
+                send_order_update_notification(order.customer.user.id, notification_c.message, time=str(notification_c.time))
+                send_order_update_notification(order.seller.user.id, notification_s.message, time=str(notification_s.time))
 

@@ -16,6 +16,7 @@ from sendgrid.helpers.mail import Mail
 import secrets, string
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from datetime import datetime
 
 
 
@@ -121,7 +122,7 @@ class PasswordLoginView(APIView):
             if user.check_password(password):
                 refresh = RefreshToken.for_user(user)
                 access = str(refresh.access_token)
-                return Response({"token" : access}, status=status.HTTP_200_OK)
+                return Response({"user" : {"name" : user.first_name, "id" : user.id},"token" : access}, status=status.HTTP_200_OK)
             else:
                 return Response({"message" : "invalid password"}, status=status.HTTP_400_BAD_REQUEST)
         else:
@@ -150,6 +151,7 @@ class OtpLoginView(APIView):
                         subject='Lyka OTP Verification',
                         html_content=f'<strong>Your Verification code is <h3>{verification_code.code}</h3></strong>'
                     )
+                print(verification_code.code)
                 sg = SendGridAPIClient(settings.SEND_GRID_KEY)
                 response = sg.send(message)
                 print(response.status_code)
@@ -177,7 +179,7 @@ class OtpLoginView(APIView):
                 verification_code.delete()
                 refresh = RefreshToken.for_user(user)
                 access = str(refresh.access_token)
-                return Response({"token" : access}, status=status.HTTP_200_OK)
+                return Response({"user" : {"name" : user.first_name, "id" : user.id},"token" : access}, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
         except Customer.DoesNotExist:
@@ -251,7 +253,7 @@ class IsCustomerLoggedInOrNot(APIView):
         user = request.user
         print(user.role)
         if user.role == LykaUser.CUSTOMER:
-            return Response({"name" : user.first_name, "id" : user.id}, status=status.HTTP_200_OK)
+            return Response({"user" : {"name" : user.first_name, "id" : user.id}}, status=status.HTTP_200_OK)
         else:
             return Response({"message" : "User not logged in"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -285,7 +287,7 @@ class CustomerProfileRetriveView(APIView):
         async_to_sync(channel_layer.group_send)(
             f'user_{user_id}',
             {
-                'type': 'send_confirmation',
+                'type': 'send_greetings',
                 'message': message,
             }
         )
@@ -293,13 +295,13 @@ class CustomerProfileRetriveView(APIView):
     def get(self, request):
         try:
             customer = Customer.objects.get(user=request.user)
-            self.send_notification(user_id=customer.user.id, message="Hy user")
+            self.send_notification(user_id=customer.user.id, message="Hy User")
             user_serializer = CustomerRetriveSerializer(customer, many=False)
             return Response(user_serializer.data, status=status.HTTP_200_OK)
         except LykaUser.DoesNotExist:
             return Response({"user doesn't exist with the given phone number"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # except Exception as e:
+        #     return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
 
 
