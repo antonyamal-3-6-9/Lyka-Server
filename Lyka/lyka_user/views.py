@@ -20,5 +20,5 @@ class NotificationView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Notification.DoesNotExist:
             return Response({"message" : "No notifications found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # except Exception as e:
+        #     return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

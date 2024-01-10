@@ -76,6 +76,35 @@ class OrderGroup(models.Model):
 
 
 class Order(models.Model):
+
+    CREATED = 'CREATED'
+    PLACED = 'PLACED'
+    CONFIRMED = 'CONFIRMED'
+    REJECTED = 'REJECTED'
+    PICKED_UP = 'PICKED UP'
+    SHIPPED = 'SHIPPED'
+    IN_TRANSIST = 'IN TRANSIST'
+    OUT_OF_DELIVERY = 'OUT OF DELIVERY'
+    DELIVERED = 'DELIVERED'
+    CANCELATION_REQUESTED = 'CANCELLATION REQUESTED'
+    CANCELLED = 'CANCELLED'
+
+    RETURN_REQUESTED = "RETURN REQUESTED"
+    RETURN_IN_TRANSIST = "RETURN IN TRANSIST"
+    RETURNED = "RETURNED"
+
+    STATUS = [
+        (CREATED, 'CREATED'),
+        (PLACED, 'PLACED'),
+        (CONFIRMED, 'CONFIRMED'),
+        (REJECTED, 'REJECTED'),
+        (PICKED_UP, 'PICKED UP'),
+        (SHIPPED, 'SHIPPED'),
+        (IN_TRANSIST, 'IN TRANSIST'),
+        (OUT_OF_DELIVERY, 'OUT OF DELIVERY'),
+        (DELIVERED, 'DELIVERED')
+    ]
+
     order_list = models.ForeignKey(OrderGroup, on_delete=models.CASCADE, null=True)
     order_id = models.UUIDField(primary_key=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True)
@@ -92,6 +121,7 @@ class Order(models.Model):
     applied_coupon = models.ForeignKey("lyka_payment.CouponType", on_delete=models.SET_NULL, null=True)
     shipping_charge = models.PositiveIntegerField(default=0)
     delivery_date = models.DateField(null=True)
+    status = models.CharField(choices=STATUS, default=CREATED)
 
     class Meta:
         ordering = ['time']

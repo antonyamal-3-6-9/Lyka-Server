@@ -35,7 +35,7 @@ def update_order(lyka_order_id, payment_method):
         for order in orders:
             order.payment_method = payment_method
             order.payment_status = True
-            order.order_status = "Placed"
+            order.status = Order.PLACED
             credentials = OrderCredentials.objects.create()
             order.credentials = credentials
             order.credentials.payment_id = generate_unique_payment_id()
@@ -43,14 +43,16 @@ def update_order(lyka_order_id, payment_method):
             order.save()
             unit = Unit.objects.get(variant=order.item.product_variant,
                                     color_code=order.item.product_color, product=order.item.product, seller=order.seller)
-            order_placed.send(sender=order.customer, unit=unit,
-                         quantity=order.item.quantity)
+            old_stock = unit.stock
+            new_stock = int(old_stock) - int(order.item.quantity)
+            unit.stock = new_stock
+            unit.save()
         return True
     elif Order.objects.filter(order_id=lyka_order_id).exists():
         order = Order.objects.get(order_id=lyka_order_id)
         order.payment_method = payment_method
         order.payment_status = True
-        order.order_status = "Placed"
+        order.status = Order.PLACED
         credentials = OrderCredentials.objects.create()
         order.credentials = credentials
         order.credentials.payment_id = generate_unique_payment_id()
@@ -58,8 +60,10 @@ def update_order(lyka_order_id, payment_method):
         order.save()
         unit = Unit.objects.get(variant=order.item.product_variant,
                                 color_code=order.item.product_color, product=order.item.product, seller=order.seller)
-        order_placed.send(sender=order.customer, unit=unit,
-                     quantity=order.item.quantity)
+        old_stock = unit.stock
+        new_stock = int(old_stock) - int(order.item.quantity)
+        unit.stock = new_stock
+        unit.save()
         return True
     else:
         return False

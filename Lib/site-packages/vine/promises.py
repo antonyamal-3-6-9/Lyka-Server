@@ -1,9 +1,8 @@
 """Promise implementation."""
-import sys
-
-from collections import deque
 import inspect
-from weakref import ref, WeakMethod
+import sys
+from collections import deque
+from weakref import WeakMethod, ref
 
 from .abstract import Thenable
 from .utils import reraise
@@ -47,7 +46,7 @@ class promise:
 
         from vine import promise, wrap
 
-        class Protocol(object):
+        class Protocol:
 
             def __init__(self):
                 self.buffer = []
@@ -78,6 +77,8 @@ class promise:
             'fun', 'args', 'kwargs', 'ready', 'failed',
             'value', 'ignore_result', 'reason', '_svpending', '_lvpending',
             'on_error', 'cancelled', 'weak', '__weakref__',
+            # adding '__dict__' to get dynamic assignment if needed
+            "__dict__",
         )
 
     def __init__(self, fun=None, args=None, kwargs=None,

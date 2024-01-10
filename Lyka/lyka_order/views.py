@@ -144,7 +144,7 @@ class OrderAddressUpdateView(APIView):
             return latitude, longitude
         else:
             return None, None
-        
+
     def haversine_distance(self, lat1, lon1, lat2, lon2):
 
         lat1_rad = math.radians(lat1)
@@ -152,23 +152,22 @@ class OrderAddressUpdateView(APIView):
         lat2_rad = math.radians(lat2)
         lon2_rad = math.radians(lon2)
 
-        
         dlat = lat2_rad - lat1_rad
         dlon = lon2_rad - lon1_rad
-        a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
+        a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * \
+            math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-    
         R = 6371.0
 
-    
         distance = R * c
         return distance
-    
+
     def calculate_shipping_charge(self, postal_code_one, postal_code_two):
         lat1, lon1 = self. geocode_postal_code(postal_code_one)
         lat2, lon2 = self.geocode_postal_code(postal_code_two)
-        distance = self.haversine_distance(lat1=lat1, lat2=lat2, lon1=lon1, lon2=lon2)
+        distance = self.haversine_distance(
+            lat1=lat1, lat2=lat2, lon1=lon1, lon2=lon2)
         shipping_charge = int(distance) * 0.2
         return shipping_charge
 
@@ -187,7 +186,8 @@ class OrderAddressUpdateView(APIView):
                         if order.shipping_address == address:
                             pass
                         else:
-                            shipping_charge = self.calculate_shipping_charge(address.zip_code, order.pickup_address.zip_code)
+                            shipping_charge = self.calculate_shipping_charge(
+                                address.zip_code, order.pickup_address.zip_code)
                             order.item.product_price -= order.shipping_charge
                             order.item.save()
                             order.shipping_address = address
@@ -197,8 +197,8 @@ class OrderAddressUpdateView(APIView):
                             order.item.product_price += order.shipping_charge
                             order.item.save()
                     else:
-                        # shipping_charge = self.calculate_shipping_charge(address.zip_code, order.pickup_address.zip_code)
-                        shipping_charge = 40
+                        shipping_charge = self.calculate_shipping_charge(
+                            address.zip_code, order.pickup_address.zip_code)
                         order.shipping_address = address
                         order.billing_address = address
                         order.shipping_charge = shipping_charge
@@ -214,7 +214,8 @@ class OrderAddressUpdateView(APIView):
                     if order.shipping_address == address:
                         return Response({"message": "Address updated successfullly"}, status=status.HTTP_200_OK)
                     else:
-                        shipping_charge = self.calculate_shipping_charge(address.zip_code, order.pickup_address.zip_code)
+                        shipping_charge = self.calculate_shipping_charge(
+                            address.zip_code, order.pickup_address.zip_code)
                         order.item.product_price -= order.shipping_charge
                         order.item.save()
                         order.shipping_address = address
@@ -224,7 +225,8 @@ class OrderAddressUpdateView(APIView):
                         order.item.product_price += order.shipping_charge
                         order.item.save()
                 else:
-                    shipping_charge = self.calculate_shipping_charge(address.zip_code, order.pickup_address.zip_code)
+                    shipping_charge = self.calculate_shipping_charge(
+                        address.zip_code, order.pickup_address.zip_code)
                     order.shipping_address = address
                     order.billing_address = address
                     order.shipping_charge = shipping_charge
@@ -411,21 +413,21 @@ class OrderItemsConfirmationView(APIView):
                     order.item.save()
                     order.item.set_selling_price()
                     order.item.save()
-                    order.order_status = "Created"
+                    order.status = Order.CREATED
                     order.save()
                 orderlist = OrderGroup.objects.get(order_list_id=order_id)
                 orderlist.set_total_price()
                 orderlist.save()
-                return Response({"message" : "success"}, status=status.HTTP_200_OK)
+                return Response({"message": "success"}, status=status.HTTP_200_OK)
             elif Order.objects.filter(order_id=order_id, customer=customer).exists():
                 order = Order.objects.get(order_id=order_id)
                 order.item.set_tax_price()
                 order.item.save()
                 order.item.set_selling_price()
                 order.item.save()
-                order.order_status = "Created"
+                order.status = Order.CREATED
                 order.save()
-                return Response({"message" : "success"}, status=status.HTTP_200_OK)
+                return Response({"message": "success"}, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
         except Customer.DoesNotExist:
@@ -516,7 +518,7 @@ class SellerOrderListView(APIView):
             orders = Order.objects.filter(
                 seller=seller
             ).exclude(
-                Q(order_status=None) | Q(order_status='Created')
+                status=Order.CREATED
             )
             order_serializer = OrderRetriveSerializer(orders, many=True)
             if not orders:
@@ -536,11 +538,12 @@ class OrderAcceptOrReject(APIView):
 
     def generate_unique_tracking_number(self):
         prefix = "LYKA"
-        random_string = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        random_string = ''.join(random.choices(
+            string.ascii_uppercase + string.digits, k=6))
         timestamp = int(time.time())
         unique_tracking_number = f"{prefix}-{random_string}-{timestamp}"
         return unique_tracking_number
-    
+
     def patch(self, request):
         try:
             order_id = request.data["order_id"]
@@ -549,13 +552,19 @@ class OrderAcceptOrReject(APIView):
             order = Order.objects.get(order_id=order_id, seller=seller)
             print(request.data)
             if order_status == "Accepted":
-                order.order_status = "Accepted"
-                order. credentials.tracking_id = self.generate_unique_tracking_number()
+                order.status = Order.CONFIRMED
+                order.credentials.tracking_id = self.generate_unique_tracking_number()
                 order.credentials.save()
                 order.time = timezone.now()
                 order.delivery_date = date.today()
             else:
-                order.order_status = "Rejected"
+                order.status = Order.REJECTED
+                unit = Unit.objects.get(variant=order.item.product_variant,
+                            color_code=order.item.product_color, product=order.item.product, seller=order.seller)
+                old_stock = unit.stock
+                new_stock = int(old_stock) + int(order.item.quantity)
+                unit.stock = new_stock
+                unit.save()
             order.save()
             return Response({"message": "Order status has been updated succesfully"}, status=status.HTTP_200_OK)
         except Order.DoesNotExist:
@@ -571,15 +580,16 @@ class OrderDetailsRetriveView(APIView):
     def get(self, request, order_id):
         try:
             order = None
-            if request.user.role == LykaUser.SELLER: 
-                order = Order.objects.get(order_id=order_id, seller__user=request.user)
+            if request.user.role == LykaUser.SELLER:
+                order = Order.objects.get(
+                    order_id=order_id, seller__user=request.user)
             elif request.user.role == LykaUser.CUSTOMER:
-                order = Order.objects.get(order_id=order_id, customer__user=request.user)
+                order = Order.objects.get(
+                    order_id=order_id, customer__user=request.user)
             order_serializer = OrderDetailsRetriveSerializer(order, many=False)
             return Response(order_serializer.data, status=status.HTTP_200_OK)
         except Order.DoesNotExist:
-            return Response({"message" : "Order not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class CustomerOrderListView(APIView):
@@ -601,9 +611,8 @@ class CustomerOrderListView(APIView):
         except Order.DoesNotExist:
             return Response({"message": "No Orders"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        
 
 class CustomerOrderCancelView(APIView):
     permission_classes = [IsAuthenticated]
@@ -611,19 +620,23 @@ class CustomerOrderCancelView(APIView):
 
     def patch(self, request, order_id):
         try:
-            order = Order.objects.get(order_id=order_id, customer__user=request.user)
-            order.order_status = "Cancelled"
-            order.save()
-            unit = Unit.objects.get(variant=order.item.product_variant,
-                                color_code=order.item.product_color, product=order.item.product, seller=order.seller)
-            unit.stock += order.item.quantity
-            unit.save()
-            return Response({"message" : "order has been successfully cancelled"}, status=status.HTTP_200_OK)
+            order = Order.objects.get(
+                order_id=order_id, customer__user=request.user)
+            if order.status != Order.DELIVERED:
+                order.status = Order.CANCELATION_REQUESTED
+                order.save()
+                unit = Unit.objects.get(variant=order.item.product_variant,
+                                    color_code=order.item.product_color, product=order.item.product, seller=order.seller)
+                unit.stock += order.item.quantity
+                unit.save()
+                return Response({"message": "order has been successfully cancelled"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"message" : "Order can't be cancelled, kindly request return"}, status=status.HTTP_406_NOT_ACCEPTABLE)
         except Order.DoesNotExist:
-            return Response({"message" : "order not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "order not found"}, status=status.HTTP_404_NOT_FOUND)
         except Customer.DoesNotExist:
-            return Response({"message" : "Customer doesn't exist"}, status=status.HTTP_401_UNAUTHORIZED)
-        
+            return Response({"message": "Customer doesn't exist"}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 class OrderReturnInitiationView(APIView):
     permission_classes = [IsAuthenticated]
@@ -631,12 +644,15 @@ class OrderReturnInitiationView(APIView):
 
     def patch(self, request, order_id):
         try:
-            order = Order.objects.get(order_id=order_id, customer__user=request.user)
-            order.order_status = "Return Requested"
-            order.save()
-            return Response({"message" : "Return has been requested successfully"}, status=status.HTTP_200_OK)
+            order = Order.objects.get(
+                order_id=order_id, customer__user=request.user)
+            if order.status == Order.DELIVERED:
+                order.status = Order.RETURN_REQUESTED
+                order.save()
+                return Response({"message": "Return has been requested successfully"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"message" : "Order can't be returned, kindly request for cancellation"}, status=status.HTTP_406_NOT_ACCEPTABLE )
         except Order.DoesNotExist:
-            return Response({"message" : "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -82,6 +82,7 @@ class CustomerRequestView(APIView):
             
 
 class CustomerCreateView(generics.CreateAPIView):
+
     def post(self, request):
         try:
             email = request.data["email"]
@@ -282,20 +283,9 @@ class CustomerProfileRetriveView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
-    def send_notification(self, user_id, message):
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f'user_{user_id}',
-            {
-                'type': 'send_greetings',
-                'message': message,
-            }
-        )
-
     def get(self, request):
         try:
             customer = Customer.objects.get(user=request.user)
-            self.send_notification(user_id=customer.user.id, message="Hy User")
             user_serializer = CustomerRetriveSerializer(customer, many=False)
             return Response(user_serializer.data, status=status.HTTP_200_OK)
         except LykaUser.DoesNotExist:

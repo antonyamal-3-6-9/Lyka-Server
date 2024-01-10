@@ -4,7 +4,7 @@ from django.conf.urls.static import static
 from .views import NotificationView
 
 urlpatterns = [
-    path("notifications/", NotificationView.as_view(), name='noti-view')
+    path("notification/", NotificationView.as_view(), name='noti-view')
 ]
 
 if settings.DEBUG:

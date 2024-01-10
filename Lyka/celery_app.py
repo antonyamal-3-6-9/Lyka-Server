@@ -13,8 +13,12 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'adding_task': {
         'task': 'lyka_order.tasks.updating_order',
-        'schedule': 300, 
+        'schedule': 100, 
     },
+    #     'printingTask': {
+    #     'task': 'lyka_order.tasks.printingTask',
+    #     'schedule': 900000, 
+    # },
 }
 app.conf.broker_connection_retry_on_startup = True
 
