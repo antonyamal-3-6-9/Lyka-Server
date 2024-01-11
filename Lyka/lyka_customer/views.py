@@ -252,7 +252,6 @@ class IsCustomerLoggedInOrNot(APIView):
 
     def get(self, request):
         user = request.user
-        print(user.role)
         if user.role == LykaUser.CUSTOMER:
             return Response({"user" : {"name" : user.first_name, "id" : user.id}}, status=status.HTTP_200_OK)
         else:
