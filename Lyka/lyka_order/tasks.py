@@ -62,6 +62,7 @@ def update_transaction(order):
 
 @shared_task
 def updating_order():
+    print("doing")
     accepted_orders = Order.objects.filter(status=Order.CONFIRMED)
     pickedup_orders = Order.objects.filter(status=Order.PICKED_UP)
     in_transit_orders = Order.objects.filter(status=Order.IN_TRANSIST)

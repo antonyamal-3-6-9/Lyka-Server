@@ -600,7 +600,7 @@ class CustomerOrderListView(APIView):
         try:
             customer = Customer.objects.get(user=request.user)
             orders = Order.objects.filter(customer=customer).exclude(
-                Q(order_status=None) | Q(order_status='Created')
+                Q(status=None) | Q(status=Order.CREATED)
             )
             order_serializer = OrderRetriveSerializer(orders, many=True)
             if not orders:
