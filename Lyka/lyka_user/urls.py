@@ -5,7 +5,7 @@ from .views import *
 
 urlpatterns = [
     path("notification/", NotificationView.as_view(), name='noti-view'),
-    path("is-active/", CheckActiveView.as_view(), name="check-active")
+    path("active/", CheckActiveView.as_view(), name="check-active")
 ]
 
 if settings.DEBUG:
