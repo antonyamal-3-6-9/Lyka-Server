@@ -102,6 +102,7 @@ class SellerCreationSerializer(serializers.ModelSerializer):
         user = user_serializer.save()
 
         seller = Seller.objects.create(user=user, unique_id=seller_id, **validated_data)
+        seller.email_verified = True
         seller.number_verified = True
         seller.save()
         return seller

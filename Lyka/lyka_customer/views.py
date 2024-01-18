@@ -82,13 +82,11 @@ class CustomerRequestView(APIView):
             
 
 class CustomerCreateView(generics.CreateAPIView):
-
     def post(self, request):
         try:
             email = request.data["email"]
             password = request.data["password"]
             token = request.data["token"]
-
             if UserCreationAuth.objects.filter(email=email, token=token, role=LykaUser.CUSTOMER).exists():
                 if not LykaUser.objects.role_exists_email(email=email, role=LykaUser.CUSTOMER):
                     lyka_user_instance, created = LykaUser.objects.get_or_create(email=email, role=LykaUser.CUSTOMER)
@@ -106,8 +104,8 @@ class CustomerCreateView(generics.CreateAPIView):
                     return Response({"message" : " customer does not exist"}, status=status.HTTP_404_NOT_FOUND)
             else:
                 return Response({"message" : "Verification link expired"}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        # except Exception as e:
-        #     return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except UserCreationAuth.DoesNotExist:
             return Response({"message" : "Link expired"}, status=status.HTTP_406_NOT_ACCEPTABLE)
         except LykaUser.DoesNotExist:
