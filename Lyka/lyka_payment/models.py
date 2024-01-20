@@ -28,7 +28,7 @@ class OrderTransaction(models.Model):
     notes = models.TextField(blank=True)
     profit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     quantity = models.PositiveIntegerField(default=0)
-    date=models.DateField(null=True, db_index=True)    
+    date=models.DateField(null=True, db_index=True, auto_now_add=True)    
     
 
 class SalesReport(models.Model):
@@ -46,73 +46,78 @@ class SalesReport(models.Model):
     def __str__(self):
         return f"Sales Report for {self.seller} ({self.start_date} - {self.end_date})"
 
- 
-def generate_report_timeline(seller, start_date, end_date):
-    total_amount = 0
-    total_profit = 0
-    total_units_sold = 0
-    total_sales = 0
-    total_refund = 0
-    total_amount_refunded = 0
-    transactions = OrderTransaction.objects.filter(payee=seller, date__range=(start_date, end_date), is_successful=True)
-    unsuccessful_transactions = OrderTransaction.objects.filter(payee=seller, date__range=(start_date, end_date), is_successful=False)
-    if transactions:
-        total_sales = len(transactions)
-        total_units_sold = transactions.aggregate(total_units_sold=Sum('quantity'))["total_units_sold"]
-        total_amount= transactions.aggregate(total_amount=Sum('amount'))['total_amount']
-        total_profit = transactions.aggregate(total_profit=Sum('profit'))['total_profit']
-    if unsuccessful_transactions:
-        total_refund = len(unsuccessful_transactions)
-        total_amount_refunded = unsuccessful_transactions.aggregate(total_amount_refunded=Sum('amount'))['total_amount_refunded']
-
-
-
-    sales_report, created = SalesReport.objects.get_or_create(pk=1)
     
-    sales_report.seller=seller,
-    sales_report.start_date=start_date,
-    sales_report.end_date=end_date,
-    sales_report.total_sales=total_sales,
-    sales_report.total_profit=total_profit,
-    sales_report.total_amount=total_amount,
-    sales_report.total_products_sold=total_units_sold,
-    sales_report.total_refunds=total_refund,
-    sales_report.total_amount_refunded=total_amount_refunded
+    def generate_report_timeline(seller, start_date, end_date):
+        total_amount = 0
+        total_profit = 0
+        total_units_sold = 0
+        total_sales = 0
+        total_refund = 0
+        total_amount_refunded = 0
+        transactions = OrderTransaction.objects.filter(payee=seller, date__range=(start_date, end_date), is_successful=True)
+        unsuccessful_transactions = OrderTransaction.objects.filter(payee=seller, date__range=(start_date, end_date), is_successful=False)
+        if transactions:
+            total_sales = len(transactions)
+            total_units_sold = transactions.aggregate(total_units_sold=Sum('quantity'))["total_units_sold"]
+            total_amount= transactions.aggregate(total_amount=Sum('amount'))['total_amount']
+            total_profit = transactions.aggregate(total_profit=Sum('profit'))['total_profit']
+        if unsuccessful_transactions:
+            total_refund = len(unsuccessful_transactions)
+            total_amount_refunded = unsuccessful_transactions.aggregate(total_amount_refunded=Sum('amount'))['total_amount_refunded']
+
+        sales_report = None
+
+        if SalesReport.objects.filter(seller=seller).exists():
+            sales_report = SalesReport.objects.get(seller=seller)
+        else:
+            sales_report = SalesReport.objects.create(seller=seller)
         
-    sales_report.save()
-    return sales_report
+        sales_report.start_date=start_date
+        sales_report.end_date=end_date
+        sales_report.total_sales=total_sales
+        sales_report.total_profit=total_profit
+        sales_report.total_amount=total_amount
+        sales_report.total_products_sold=total_units_sold
+        sales_report.total_refunds=total_refund
+        sales_report.total_amount_refunded=total_amount_refunded
+            
+        sales_report.save()
+        return sales_report
 
 
-def generate_report(seller):
-    total_amount = 0
-    total_profit = 0
-    total_units_sold = 0
-    total_sales = 0
-    total_refund = 0
-    total_amount_refunded = 0
-    transactions = OrderTransaction.objects.filter(payee=seller, is_successful=True)
-    unsuccessful_transactions = OrderTransaction.objects.filter(payee=seller,  is_successful=False)    
-    if transactions:
-        total_sales = len(transactions) + 1
-        total_units_sold = transactions.aggregate(total_units_sold=Sum('quantity'))["total_units_sold"]
-        total_amount= transactions.aggregate(total_amount=Sum('amount'))['total_amount']
-        total_profit = transactions.aggregate(total_profit=Sum('profit'))['total_profit']
-    if unsuccessful_transactions:
-        total_refund = len(unsuccessful_transactions)
-        total_amount_refunded = unsuccessful_transactions.aggregate(total_amount_refunded=Sum('amount'))['total_amount_refunded']
+    def generate_report(seller):
+        total_amount = 0
+        total_profit = 0
+        total_units_sold = 0
+        total_sales = 0
+        total_refund = 0
+        total_amount_refunded = 0
+        sales_report = None
+        transactions = OrderTransaction.objects.filter(payee=seller, is_successful=True)
+        unsuccessful_transactions = OrderTransaction.objects.filter(payee=seller,  is_successful=False)    
+        if transactions:
+            total_sales = len(transactions)
+            total_units_sold = transactions.aggregate(total_units_sold=Sum('quantity'))["total_units_sold"]
+            total_amount= transactions.aggregate(total_amount=Sum('amount'))['total_amount']
+            total_profit = transactions.aggregate(total_profit=Sum('profit'))['total_profit']
+        if unsuccessful_transactions:
+            total_refund = len(unsuccessful_transactions)
+            total_amount_refunded = unsuccessful_transactions.aggregate(total_amount_refunded=Sum('amount'))['total_amount_refunded']
 
-    sales_report, created = SalesReport.objects.get_or_create(pk=1)
+        if SalesReport.objects.filter(seller=seller).exists():
+            sales_report = SalesReport.objects.get(seller=seller)
+        else:
+            sales_report = SalesReport.objects.create(seller=seller)
 
-    sales_report.seller=seller,
-    sales_report.total_sales=total_sales,
-    sales_report.total_profit=total_profit, 
-    sales_report.total_products_sold=total_units_sold,
-    sales_report.total_amount=total_amount,
-    sales_report.total_refunds=total_refund,
-    sales_report.total_amount_refunded=total_amount_refunded
+        sales_report.total_sales=total_sales
+        sales_report.total_profit=total_profit
+        sales_report.total_products_sold=total_units_sold
+        sales_report.total_amount=total_amount
+        sales_report.total_refunds=total_refund
+        sales_report.total_amount_refunded=total_amount_refunded
 
-    sales_report.save()
-    return sales_report
+        sales_report.save()
+        return sales_report
 
 
 class CouponType(models.Model):

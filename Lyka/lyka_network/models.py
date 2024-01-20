@@ -110,4 +110,3 @@ class Distance(models.Model):
                     })
 
 
-

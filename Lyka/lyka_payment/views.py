@@ -20,6 +20,8 @@ import hashlib
 import time
 import secrets
 import stripe
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 def generate_unique_payment_id():
@@ -28,9 +30,20 @@ def generate_unique_payment_id():
     payment_id = f'{timestamp}{random_string}'
     return payment_id
 
+def send_order_update_notification(user_id, message, time):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f'user_{user_id}',
+        {
+            'type': 'send_order_update',
+            'message': message,
+            'time': time
+        }
+    )
 
 def update_order(lyka_order_id, payment_method):
     if OrderGroup.objects.filter(order_list_id=lyka_order_id).exists():
+        
         orders = Order.objects.filter(order_list__order_list_id=lyka_order_id)
         for order in orders:
             order.payment_method = payment_method
@@ -160,6 +173,7 @@ class RazorPayOrderPaymentCaptureView(APIView):
                     self.payment_id, r_order["amount"])
                 if response.get("status") == "captured":
                     if update_order(lyka_order_id=self.lyka_order_id, payment_method="RAZORPAY"):
+                        send_order_update_notification(message="Your order has been successfully placed", user_id=request.user.id, time="12 Pm")
                         return Response({"message": "payment successfull and order has been placed"}, status=status.HTTP_200_OK)
                     else:
                         refund = client.payment.refund(self.payment_id, {
@@ -344,7 +358,7 @@ class SalesWeekView(APIView):
             for week in weeks:
                 total_amount = 0
                 startDate, endDate = week.split(" - ")
-                transactions = OrderTransaction.objects.filter(date__range=(startDate, endDate), payee=seller, is_successful=True)
+                transactions = OrderTransaction.objects.filter(date__range=[startDate, endDate], payee=seller, is_successful=True)
                 if transactions:
                     total_amount = transactions.aggregate(total_amount=Sum('amount'))["total_amount"]
                     transactions_dict[week] = total_amount
@@ -363,16 +377,18 @@ class SalesMonthView(APIView):
 
     def get_transactions_for_year_and_month(self, year, month, seller):
         start_date = datetime(year, month, 1)
-        print(start_date)
+        total_amount = 0
         end_date = None
         if (start_date.month >= 12):
             end_date = start_date.replace(year=start_date.year + 1 ,month=start_date.month - 11, day=1)
         else:
             end_date = start_date.replace(month=start_date.month + 1, day=1) - timedelta(days=1)
-        transactions = OrderTransaction.objects.filter(date__range=(start_date, end_date), payee=seller, is_successful=True)
-        total_amount = 0
+        transactions = OrderTransaction.objects.filter(date__gte=datetime.date(start_date), date__lte=datetime.date(end_date), payee=seller, is_successful=True)
         if transactions:
             total_amount = transactions.aggregate(total_amount=Sum('amount'))["total_amount"]
+        
+
+        print(start_date, end_date, total_amount)
 
         return total_amount
 
@@ -409,7 +425,7 @@ class SalesYearView(APIView):
                 start_year = datetime(year, 1, 1)
                 start_day_of_next_year = datetime(year + 1, 1, 1)
                 end_year = start_day_of_next_year - timedelta(days=1)
-                transactions = OrderTransaction.objects.filter(date__range=(start_year, end_year), payee=seller, is_successful=True)
+                transactions = OrderTransaction.objects.filter(date__range=[start_year, end_year], payee=seller, is_successful=True)
                 if transactions:
                     total_amount = transactions.aggregate(total_amount=Sum('amount'))["total_amount"]
                     transactions_dict[year] = total_amount
@@ -429,7 +445,7 @@ class SalesReportRetriveView(APIView):
     def get(self, request):
         try:
             seller = Seller.objects.get(user=request.user)
-            sales_report = generate_report(seller=seller)
+            sales_report = SalesReport.generate_report(seller=seller)
             sales_report_serializer = SalesReportSerializer(sales_report, many=False)
             return Response(sales_report_serializer.data, status=status.HTTP_200_OK)
         except Seller.DoesNotExist:
@@ -449,7 +465,7 @@ class SalesReportTimelimeView(APIView):
             end_date = request.data["end_date"]
             seller = Seller.objects.get(user=request.user)
             print(request.data)
-            sales_report = generate_report_timeline(seller=seller, start_date=start_date, end_date=end_date)
+            sales_report = SalesReport.generate_report_timeline(seller=seller, start_date=start_date, end_date=end_date)
             sales_report_serializer = SalesReportSerializer(sales_report, many=False)
             return Response(sales_report_serializer.data, status=status.HTTP_200_OK)
         except Seller.DoesNotExist:
