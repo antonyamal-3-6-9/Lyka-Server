@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import *
-from lyka_address.serializers import SellerStoreAddressRetriveSerializer, SellerStoreAddressSerializer
+from lyka_address.serializers import SellerStoreAddressRetriveSerializer
 import uuid
 from rest_framework.exceptions import ValidationError
 from lyka_customer.models import LykaUser
@@ -21,15 +21,15 @@ class SellerUserSerializer(serializers.ModelSerializer):
 
         try:
             if LykaUser.objects.role_exists_email(email=email, role=LykaUser.SELLER):
-                raise ValidationError({"error": "User exists with the given email"})
+                raise ValidationError({"error": "User exists with the given email."})
             if LykaUser.objects.role_exists_phone(phone=phone, role=LykaUser.SELLER):
-                raise ValidationError({"error": "User exists with the given phone"})
+                raise ValidationError({"error": "User exists with the given phone."})
             else:
                 user = LykaUser.objects.create_user(email=email, phone=phone, role=LykaUser.SELLER, **validated_data)
                 user.save()
                 return user
         except ObjectDoesNotExist:
-            raise ValidationError({"error": "An error occurred during seller creation"})
+            raise ValidationError({"error": "An error occurred during seller creation."})
 
 
         
@@ -42,7 +42,6 @@ class AddressProofSerializer(serializers.ModelSerializer):
         address_proof_number = validated_data.get('address_proof_number')
         if AddressProof.objects.filter(address_proof_number=address_proof_number).exists():
             raise serializers.ValidationError("Address Proof number already exists.")
-
         return super().create(validated_data)
 
 
@@ -55,7 +54,6 @@ class PanCardSerializer(serializers.ModelSerializer):
         pan_number = validated_data.get('pan_number')
         if PanCard.objects.filter(pan_number=pan_number).exists():
             raise serializers.ValidationError("PAN number already exists.")
-
         return super().create(validated_data)
 
 
@@ -68,7 +66,6 @@ class BankAccountSerializer(serializers.ModelSerializer):
         account_number = validated_data.get('account_number')
         if BankAccount.objects.filter(account_number=account_number).exists():
             raise serializers.ValidationError("Account number already exists.")
-
         return super().create(validated_data)
 
 
@@ -81,7 +78,6 @@ class GstRegistrationNumberSerializer(serializers.ModelSerializer):
         gst_number = validated_data.get('gst_number')
         if GstRegistrationNumber.objects.filter(gst_number=gst_number).exists():
             raise serializers.ValidationError("GST number already exists.")
-
         return super().create(validated_data)
 
 
@@ -144,8 +140,9 @@ class SellerGetSerializer(serializers.ModelSerializer):
     user = SellerUserSerializer()
     class Meta:
         model = Seller
-        fields = ["user", "unique_id", "bussiness_name", "verified", "number_verified", "email_verified", "address_verified", 
-                  "pan_verified", "gstin_verified", "bank_account_verified" ]
+        fields = ["user", "unique_id", "bussiness_name", "verified", "number_verified",
+                   "email_verified", "address_verified", "pan_verified", "gstin_verified", 
+                   "bank_account_verified" ]
 
 class SellerUserUpdateSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(required=False)
@@ -164,22 +161,21 @@ class SellerUpdateSerializer(serializers.ModelSerializer):
         fields = ["user", "bussiness_name"]
 
     def update(self, instance, validated_data):
-        user_data = validated_data.pop("user")
-        bussiness_name = validated_data.pop("bussiness_name", instance.bussiness_name)
+        user_data = validated_data.pop("user", {})       
         if user_data:
-            if user_data["email"]:
+            if "email" in user_data:
                 if LykaUser.objects.role_exists_email(email=user_data["email"], role=LykaUser.SELLER):
-                    raise ValidationError("Seller already exists with the same email")
-            elif user_data["phone"]:
+                    raise ValidationError("Customer already exists with the same email")
+            elif "phone" in user_data:
                 if LykaUser.objects.role_exists_phone(phone=user_data["phone"], role=LykaUser.SELLER):
-                    raise ValidationError("Seller exists with the given phone")
-            user_serializer = SellerUserUpdateSerializer(instance.user, user_data)
-            user_serializer.is_valid(raise_exception=True)
-            user = user_serializer.save()
-            if user.phone is not None:
-                instance.number_verified = True
-                instance.save()
-        if bussiness_name:
+                    raise ValidationError("Customer exists with the given phone")
+        user_serializer = SellerUserUpdateSerializer(instance.user, user_data)
+        user_serializer.is_valid(raise_exception=True)
+        user = user_serializer.save()
+        if user.phone is not None:
+            instance.number_verified = True
+            instance.save()
+        if "bussiness_name" in validated_data:
             if Seller.objects.filter(bussiness_name=bussiness_name).exists():
                 raise ValidationError("Business name already exists")
             instance.bussiness_name = bussiness_name
@@ -194,15 +190,4 @@ class SellerBusinessNameSerializer(serializers.ModelSerializer):
 
 
 
-
-
-        
-
-
-
-
-        
-
-
-        
 

@@ -33,7 +33,7 @@ class SellerExistsOrNot(APIView):
             return Response({"message": "Seller doesn't exist with the given credentials"}, status=status.HTTP_200_OK)
 
 
-class EmailLoginView(APIView):
+class PasswordLoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
@@ -77,6 +77,7 @@ class OtpLoginView(APIView):
                 sg = SendGridAPIClient(settings.SEND_GRID_KEY)
                 response = sg.send(message)
                 print(response.status_code)
+                print(verification_code.otp)
                 if response.status_code == 202:
                     return Response({"message": "OTP Send successfully"}, status=status.HTTP_200_OK)
                 else:

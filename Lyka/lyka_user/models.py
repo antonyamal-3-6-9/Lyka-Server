@@ -14,16 +14,12 @@ def numberGenerator():
 
 
 class LykaUserManager(BaseUserManager):
-    def create_user(self, email, role, password=None, phone=None, first_name = None, last_name=None, **extra_fields):
+    def create_user(self, email, role, password=None, phone=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
         if not role:
             raise ValueError('The Role field must be set')
         
-        if not first_name:
-            first_name = "Customer"
-        if not last_name:
-            last_name = numberGenerator()
 
         email = self.normalize_email(email)
         user = self.model(

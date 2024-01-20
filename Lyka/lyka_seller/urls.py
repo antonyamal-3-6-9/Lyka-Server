@@ -8,7 +8,7 @@ from .views import *
 
 urlpatterns = [
     path("register/", SellerCreateView.as_view(), name='seller-create'),
-    path("login-email/", EmailLoginView.as_view(), name='seller-login-email'),
+    path("password-login/", PasswordLoginView.as_view(), name='seller-login-email'),
     path("pan-verify/", SellerPanVerificationView.as_view(), name='seller-pan-verify'),
     path("address-verify/", SellerAddressVerificationView.as_view(), name='seller-address-verify'),
     path("bank-verify/", SellerBankVerificationView.as_view(), name='seller-bank-verify'),
