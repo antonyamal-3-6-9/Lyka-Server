@@ -26,8 +26,7 @@ class NotificationPrivateConsumer(AsyncWebsocketConsumer):
 
     async def send_order_update(self, event):
         message = event['message']
-        time = event["time"]
-        await self.send(text_data=json.dumps({'message': message , 'time' : time}))
+        await self.send(text_data=json.dumps({'message': message}))
 
     async def send_instant_order_update(self, event):
         await self.send(text_data=json.dumps({"message" : "HY User", "time" : "12 PM"}))

@@ -188,6 +188,11 @@ class SellerBusinessNameSerializer(serializers.ModelSerializer):
         model = Seller
         fields = ["bussiness_name"]
 
+class SellerStoreNameRetriveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PickupStore
+        fields = ['store_name']
+
 
 
 

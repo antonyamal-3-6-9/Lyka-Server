@@ -11,14 +11,13 @@ import time
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
-def send_order_update_notification(user_id, message, time):
+def send_order_update_notification(user_id, message):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         f'user_{user_id}',
         {
             'type': 'send_order_update',
             'message': message,
-            'time': time
         }
     )
 
@@ -57,15 +56,14 @@ def change_order_status(order, new_status):
     order.save()
 
 def notify_order_update(order, new_status):
-    message = f'Your order {order.item.product.brand} {order.item.product.name} of {order.order_id} has been {new_status}'
+    message = f'Your order of id {order.order_id} has been {new_status} at {order.time}'
     notification_c = Notification.objects.create(owner=order.customer.user, message=message)
     notification_s = Notification.objects.create(owner=order.seller.user, message=message)
-    send_order_update_notification(order.customer.user.id, notification_c.message, time=str(notification_c.time))
-    send_order_update_notification(order.seller.user.id, notification_s.message, time=str(notification_s.time))
+    send_order_update_notification(order.customer.user.id, notification_c.message)
+    send_order_update_notification(order.seller.user.id, notification_s.message)
 
 @shared_task
 def updating_order():
-    print("doing")
     order_status_updates = [
         (Order.CONFIRMED, Order.PICKED_UP, 2),
         (Order.PICKED_UP, Order.SHIPPED, 2),

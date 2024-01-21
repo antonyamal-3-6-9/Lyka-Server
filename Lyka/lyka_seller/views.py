@@ -531,3 +531,16 @@ class IsStoreExistsOrNot(APIView):
         except Exception as e:
             return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+class SellerBusinessNameFetchView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            seller = Seller.objects.get(user=request.user)
+            return Response({"business_name" : seller.bussiness_name}, status=status.HTTP_200_OK)
+        except Seller.DoesNotExist:
+            return Response({"message" : "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        

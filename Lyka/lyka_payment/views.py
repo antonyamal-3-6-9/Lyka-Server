@@ -22,6 +22,7 @@ import secrets
 import stripe
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from lyka_user.models import Notification
 
 
 def generate_unique_payment_id():
@@ -30,20 +31,18 @@ def generate_unique_payment_id():
     payment_id = f'{timestamp}{random_string}'
     return payment_id
 
-def send_order_update_notification(user_id, message, time):
+def send_order_update_notification(user_id, message):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         f'user_{user_id}',
         {
             'type': 'send_order_update',
             'message': message,
-            'time': time
         }
     )
 
 def update_order(lyka_order_id, payment_method):
-    if OrderGroup.objects.filter(order_list_id=lyka_order_id).exists():
-        
+    if OrderGroup.objects.filter(order_list_id=lyka_order_id).exists():   
         orders = Order.objects.filter(order_list__order_list_id=lyka_order_id)
         for order in orders:
             order.payment_method = payment_method
@@ -60,6 +59,12 @@ def update_order(lyka_order_id, payment_method):
             new_stock = int(old_stock) - int(order.item.quantity)
             unit.stock = new_stock
             unit.save()
+            message_c=f'Your order for {order.item.product.brand} {order.item.product.name} has been successfully placed at {order.time}'
+            message_s=f'Your order for {order.item.product.brand} {order.item.product.name} has been successfully placed at {order.time}'
+            send_order_update_notification(user_id=order.customer.user.id, message=message_c)
+            send_order_update_notification(user_id=order.seller.user.id, message=message_s)
+            notification_c = Notification.objects.create(owner=order.customer.user, message=message_c)
+            notification_s = Notification.objects.create(owner=order.seller.user, message=message_s)
         return True
     elif Order.objects.filter(order_id=lyka_order_id).exists():
         order = Order.objects.get(order_id=lyka_order_id)
@@ -77,6 +82,12 @@ def update_order(lyka_order_id, payment_method):
         new_stock = int(old_stock) - int(order.item.quantity)
         unit.stock = new_stock
         unit.save()
+        message_c=f'Your order for {order.item.product.brand} {order.item.product.name} has been successfully placed at {order.time}'
+        message_s=f'Your order for {order.item.product.brand} {order.item.product.name} has been successfully placed at {order.time}'
+        send_order_update_notification(user_id=order.customer.user.id, message=message_c)
+        send_order_update_notification(user_id=order.seller.user.id, message=message_s)
+        notification_c = Notification.objects.create(owner=order.customer.user, message=message_c)
+        notification_s = Notification.objects.create(owner=order.seller.user, message=message_s)
         return True
     else:
         return False
@@ -173,8 +184,7 @@ class RazorPayOrderPaymentCaptureView(APIView):
                     self.payment_id, r_order["amount"])
                 if response.get("status") == "captured":
                     if update_order(lyka_order_id=self.lyka_order_id, payment_method="RAZORPAY"):
-                        send_order_update_notification(message="Your order has been successfully placed", user_id=request.user.id, time="12 Pm")
-                        return Response({"message": "payment successfull and order has been placed"}, status=status.HTTP_200_OK)
+                        return Response({"message": "payment successful and order has been placed"}, status=status.HTTP_200_OK)
                     else:
                         refund = client.payment.refund(self.payment_id, {
                                 "amount": r_order["amount"],

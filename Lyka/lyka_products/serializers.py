@@ -3,10 +3,11 @@ from .models import *
 from lyka_seller.models import Seller
 from django.utils.dateparse import parse_date
 from lyka_categories.serializers import *
-from lyka_seller.serializers import SellerBusinessNameSerializer
+from lyka_seller.serializers import SellerBusinessNameSerializer, SellerStoreNameRetriveSerializer
 from lyka_user.models import LykaUser
 from rest_framework.exceptions import ValidationError
 import uuid
+ 
 
 class ImageSerializer(serializers.Serializer):
     images = serializers.ListField(child=serializers.ImageField())
@@ -130,6 +131,7 @@ class UnitRetriveSerializer(serializers.ModelSerializer):
     color_code = ColorSerializer()
     variant = VariationsSerializer()
     product = ProductRetriveSerializer()
+    warehouse = SellerStoreNameRetriveSerializer()
     class Meta:
         model = Unit
         fields = "__all__"

@@ -28,7 +28,8 @@ urlpatterns = [
     path("update-profile/<uuid:pk>/", UpdateSellerProfile.as_view(), name='update-profile'),
     path("change-password/", SellerPasswordChangeView.as_view(), name='password-change'),
     path("logout/", SellerLogOutView.as_view(), name='logout'),
-    path('store-exists-or-not/', IsStoreExistsOrNot.as_view(), name="store-exists")
+    path('store-exists-or-not/', IsStoreExistsOrNot.as_view(), name="store-exists"),
+    path('get-business-name/', SellerBusinessNameFetchView.as_view(), name='get-business')
 ]
 
 if settings.DEBUG:

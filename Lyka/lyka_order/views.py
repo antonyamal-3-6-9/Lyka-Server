@@ -5,8 +5,8 @@ from rest_framework import generics
 from .serializers import *
 from lyka_cart.models import *
 from lyka_customer.models import Customer
-from lyka_seller.models import Seller, PickupStore
-from lyka_payment.models import CouponType, CouponUsage, OrderTransaction, Wallet
+from lyka_seller.models import Seller
+from lyka_payment.models import CouponType, CouponUsage
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
@@ -18,9 +18,21 @@ import random
 import string
 import time
 import requests
-from datetime import date, datetime, timedelta
-from lyka_user.models import LykaUser
+from datetime import date
+from lyka_user.models import LykaUser, Notification
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
+
+def send_order_update_notification(user_id, message):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f'user_{user_id}',
+        {
+            'type': 'send_order_update',
+            'message': message,
+        }
+    )
 
 
 def convert_to_nested_dict(query_dict):
@@ -240,8 +252,8 @@ class OrderAddressUpdateView(APIView):
 
         except CustomerAddress.DoesNotExist:
             return Response({"message": "Address not found"}, status=status.HTTP_404_NOT_FOUND)
-        # except Exception as e:
-        #     return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class OrderApplyCoupon(APIView):
@@ -567,6 +579,12 @@ class OrderAcceptOrReject(APIView):
                 unit.stock = new_stock
                 unit.save()
             order.save()
+            message_c=f'Your order for {order.item.product.brand} {order.item.product.name} has been {order.status} by the seller'
+            message_s=f'Your have {order.status} an order for {order.item.product.brand} {order.item.product.name} placed'
+            send_order_update_notification(user_id=order.customer.user.id, message=message_c)
+            send_order_update_notification(user_id=order.seller.user.id, message=message_s)
+            notification_c = Notification.objects.create(owner=order.customer.user, message=message_c)
+            notification_s = Notification.objects.create(owner=order.seller.user, message=message_s)
             return Response({"message": "Order status has been updated succesfully"}, status=status.HTTP_200_OK)
         except Order.DoesNotExist:
             return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -630,6 +648,12 @@ class CustomerOrderCancelView(APIView):
                                     color_code=order.item.product_color, product=order.item.product, seller=order.seller)
                 unit.stock += order.item.quantity
                 unit.save()
+                message_c=f'Your order for {order.item.product.brand} {order.item.product.name} has been successfully {order.status}'
+                message_s=f'Your order for {order.item.product.brand} {order.item.product.name} has been Cancelled by the customer'
+                send_order_update_notification(user_id=order.customer.user.id, message=message_c)
+                send_order_update_notification(user_id=order.seller.user.id, message=message_s)
+                notification_c = Notification.objects.create(owner=order.customer.user, message=message_c)
+                notification_s = Notification.objects.create(owner=order.seller.user, message=message_s)
                 return Response({"message": "order has been successfully cancelled"}, status=status.HTTP_200_OK)
             else:
                 return Response({"message" : "Order can't be cancelled, kindly request return"}, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -650,6 +674,12 @@ class OrderReturnInitiationView(APIView):
             if order.status == Order.DELIVERED:
                 order.status = Order.RETURN_REQUESTED
                 order.save()
+                message_c=f'Your order for {order.item.product.brand} {order.item.product.name} has been successfully Requested for return, Soon your order will be picked up'
+                message_s=f'Your order for {order.item.product.brand} {order.item.product.name} is being Returned by the customer, a refund will be initiated after a successful return of the product'
+                send_order_update_notification(user_id=order.customer.user.id, message=message_c)
+                send_order_update_notification(user_id=order.seller.user.id, message=message_s)
+                notification_c = Notification.objects.create(owner=order.customer.user, message=message_c)
+                notification_s = Notification.objects.create(owner=order.seller.user, message=message_s)
                 return Response({"message": "Return has been requested successfully"}, status=status.HTTP_200_OK)
             else:
                 return Response({"message" : "Order can't be returned, kindly request for cancellation"}, status=status.HTTP_406_NOT_ACCEPTABLE )
