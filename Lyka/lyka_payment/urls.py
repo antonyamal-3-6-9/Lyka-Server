@@ -24,7 +24,12 @@ urlpatterns = [
     path('seller/get-sales-report/', SalesReportRetriveView.as_view(), name='get-sales-report'),
     path('seller/get-sales-report/time-line/', SalesReportTimelimeView.as_view(), name='get-sales-report-timeline'),
 
-    path('seller/get-sales/', SalesRetriveView.as_view(), name='get-sales')
+    path('seller/get-sales/', SalesRetriveView.as_view(), name='get-sales'),
+
+    path('lyka-admin/coupon/create/', CouponGenerateView.as_view(), name="coupon-create"),
+    path('lyka-admin/coupon/update/<int:pk>/', CouponUpdateView.as_view(), name='coupon-update'),
+    path('lyka-admin/coupon/delete/<int:pk>/', CouponDeleteView.as_view(), name="coupon-delete"),
+    path('lyka-admin/coupon/list/', CouponListVIew.as_view(), name='coupon-list')
 ]
 
 

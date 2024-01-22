@@ -229,7 +229,22 @@ class ShowDetailsView(APIView):
             return Response(data.data)
         except Main.DoesNotExist:
             return Response("Details not found", status=status.HTTP_404_NOT_FOUND)
-
+        
+class ProductsListView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    def get(self, request):
+        try:
+            if request.user.role == LykaUser.ADMIN:
+                products = Product.objects.all()
+                products_serializer = ProductRetriveSerializer(products, many=True)
+                return Response(products_serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({"message" : "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        except Product.DoesNotExist:
+            return Response({"message" : "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class UnitListView(generics.ListAPIView):
     queryset = Unit.objects.all()

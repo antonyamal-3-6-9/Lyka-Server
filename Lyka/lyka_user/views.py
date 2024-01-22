@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-from .serializers import NotificationSerializer
+from .serializers import NotificationSerializer, UserListSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
+from rest_framework import generics
 from rest_framework import status
 from .models import Notification, LykaUser
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+
 
 # Create your views here.
 
@@ -40,3 +40,19 @@ class CheckActiveView(APIView):
             return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
+class UserListView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            if request.user == LykaUser.ADMIN:
+                users = LykaUser.objects.all()
+                user_serializer = UserListSerializer(users, many=True)
+                return Response(user_serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({"message" : "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        except LykaUser.DoesNotExist:
+            return Response({"message" : "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message", "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -2,7 +2,7 @@ import base64
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from lyka_products.models import Unit
 import requests
@@ -115,9 +115,32 @@ def get_amount_and_check(order_id):
         else:
             return amount 
 
+class CouponGenerateView(generics.CreateAPIView):
+    serializer_class = CouponSerializer()
+    queryset = CouponType.objects.all()
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+class CouponUpdateView(generics.UpdateAPIView):
+    serializer_class = CouponSerializer()
+    queryset = CouponType.objects.all()
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+class CouponDeleteView(generics.DestroyAPIView):
+    serializer_class = CouponSerializer()
+    queryset = CouponType.objects.all()
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+class CouponListVIew(generics.ListAPIView):
+    serializer_class = CouponSerializer()
+    queryset = CouponType.objects.all()
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
 
 class RazorPayOrderPaymentCreationView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]
 
     def razorpay_order(self, amount, customer_name):

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'rest_framework',
     'corsheaders',
+    'lyka_admin',
     'lyka_address',
     'lyka_cart',
     'lyka_categories',

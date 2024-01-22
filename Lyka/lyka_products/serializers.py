@@ -95,11 +95,13 @@ class ProductRetriveSerializer(serializers.ModelSerializer):
     root_category = RootViewSerializer()
     main_category = MainViewSerializer()
     sub_category = SubViewSerializer()
+    colors = ColorSerializer(many=True)
+    variations = VariationsSerializer(many=True)
     class Meta:
         model = Product
         fields = ["productId", "brand", "name", "root_category", 
                   "main_category", "sub_category","description", "thumbnail", 
-                  "availability","weight", "launch_date"]
+                  "availability","weight", "launch_date", "colors", " variations"]
 
 class ProductDetailsRetriveSerializer(serializers.ModelSerializer):
     colors = ColorSerializer(many=True)

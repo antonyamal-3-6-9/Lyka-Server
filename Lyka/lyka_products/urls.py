@@ -23,7 +23,9 @@ urlpatterns = [
     path('get-items/main/<uuid:main>/', LykaItemMainCategoryRetriveView.as_view(), name='get-main-items'),
     path('get-items/root/<uuid:root>/', LykaItemRootCategoryRetriveView.as_view(), name="get-root-items"),
     path('get-items/sub/<uuid:sub>/', LykaItemSubCategoryRetriveView.as_view(), name="get-sub-items"),
-    path('color-or-variation-exists/<uuid:seller_id>/<uuid:product_id>/<int:color_id>/<int:variant_id>/<str:is_variant_color>/', ColorOrVariantExistsView.as_view(), name='color-exists' )
+    path('color-or-variation-exists/<uuid:seller_id>/<uuid:product_id>/<int:color_id>/<int:variant_id>/<str:is_variant_color>/', ColorOrVariantExistsView.as_view(), name='color-exists' ),
+    path('lyka-admin/list/all/', ProductsListView.as_view(), name='product-list'),
+    
 ]
 
 if settings.DEBUG:

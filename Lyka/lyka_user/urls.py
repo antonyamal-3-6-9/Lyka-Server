@@ -5,7 +5,8 @@ from .views import *
 
 urlpatterns = [
     path("notification/", NotificationView.as_view(), name='noti-view'),
-    path("active/", CheckActiveView.as_view(), name="check-active")
+    path("active/", CheckActiveView.as_view(), name="check-active"),
+    path('lyka-admin/list/all/', UserListView.as_view(), name='user-list'),
 ]
 
 if settings.DEBUG:

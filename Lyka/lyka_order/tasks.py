@@ -5,6 +5,7 @@ from celery import shared_task
 from lyka_payment.models import OrderTransaction
 from lyka_user.models import Notification
 from lyka_products.models import Unit
+from lyka_admin.models import Commission
 import string
 import random
 import time
@@ -21,34 +22,48 @@ def send_order_update_notification(user_id, message):
         }
     )
 
-def generate_transaction_ref_no(length=10):
+def generate_transaction_ref_no(length=6):
     characters = string.ascii_letters + string.digits
     random_string = ''.join(random.choice(characters) for _ in range(length))
-
     timestamp_ms = int(time.time() * 1000)
+    return f"LYKA$OD$-{timestamp_ms}-{random_string}"
 
-    return f"TXN-{timestamp_ms}-{random_string}"
+
+def get_percentage(amount):
+    return ((amount * 2)/100)
 
 def generate_transaction(order):
-    transaction_ref_no = generate_transaction_ref_no(13)
-
+    transaction_ref_no = generate_transaction_ref_no()
+    commission_amount = get_percentage(order.item.product_price)
+    new_price = order.item.product_price
     OrderTransaction.objects.create(
         payer=order.customer,
         payee=order.seller,
         order=order,
         entry=order.payment_method,
-        amount=order.item.product_price,
+        amount=new_price,
         ref_no=transaction_ref_no,
         is_successful=True,
-        profit=order.item.product_price - order.item.original_price,
+        profit=new_price- order.item.original_price,
         quantity=order.item.quantity,
         notes=f'Transaction recorded for the Order of {order.item.product.brand} {order.item.product.name} {order.item.product_variant} {order.item.product_color} from {order.seller.bussiness_name} to {order.shipping_address.name}'
     )
 
+    Commission.objects.create(
+        amount = commission_amount,
+        ref_no = transaction_ref_no,
+        is_successful = True
+    )
+
 def update_transaction(order):
     transaction = OrderTransaction.objects.get(order=order, payee=order.seller, payer=order.customer, is_successful=True)
+    commission = Commission.objects.get(ref_no=transaction.ref_no, is_successful = True)
+    commission.is_successful = False
+    commission.save()
     transaction.is_successful = False
     transaction.save()
+
+
 
 def change_order_status(order, new_status):
     order.status = new_status
