@@ -10,6 +10,7 @@ class RootSerializer(serializers.ModelSerializer):
         fields = ['name']
 
     def create(self, validated_data):
+        print(validated_data)
         name = validated_data['name']
         slug = slugify(name)
         id = uuid.uuid4()
@@ -62,6 +63,7 @@ class SubViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sub
         fields = "__all__"
+    
         
         
         

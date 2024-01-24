@@ -101,7 +101,7 @@ class ProductRetriveSerializer(serializers.ModelSerializer):
         model = Product
         fields = ["productId", "brand", "name", "root_category", 
                   "main_category", "sub_category","description", "thumbnail", 
-                  "availability","weight", "launch_date", "colors", " variations"]
+                  "availability","weight", "launch_date", "colors", "variations"]
 
 class ProductDetailsRetriveSerializer(serializers.ModelSerializer):
     colors = ColorSerializer(many=True)

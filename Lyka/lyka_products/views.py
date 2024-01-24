@@ -229,6 +229,8 @@ class ShowDetailsView(APIView):
             return Response(data.data)
         except Main.DoesNotExist:
             return Response("Details not found", status=status.HTTP_404_NOT_FOUND)
+        except Details.DoesNotExist:
+            return Response({"message" : "Not Found"}, status=status.HTTP_404_NOT_FOUND)
         
 class ProductsListView(APIView):
     permission_classes = [IsAuthenticated]

@@ -53,8 +53,8 @@ class CommissionRetrieveView(APIView):
                 return Response({"message" : "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
         except Commission.DoesNotExist:
             return Response({"message" : "Not Found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # except Exception as e:
+        #     return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CommissionDaysView(APIView):
@@ -79,8 +79,8 @@ class CommissionDaysView(APIView):
                 return Response({"message" : "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
         except Commission.DoesNotExist:
             return Response({"message" : "Not Found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # except Exception as e:
+        #     return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -90,13 +90,13 @@ class CommissionWeeksView(APIView):
 
     def post(self, request):
         try:
-            if request.user == LykaUser.ADMIN:
+            if request.user.role == LykaUser.ADMIN:
                 weeks = request.data['weeks']
                 transactions_dict = {}
                 for week in weeks:
                     total_amount = 0
                     startDate, endDate = week.split(" - ")
-                    commissions = Commission.objects.filter(date__range=[startDate, endDate], payee=seller, is_successful=True)
+                    commissions = Commission.objects.filter(date__range=[startDate, endDate], is_successful=True)
                     if commissions:
                         total_amount = commissions.aggregate(total_amount=Sum('amount'))["total_amount"]
                         transactions_dict[week] = total_amount
@@ -184,15 +184,15 @@ class CommissionReportRetrieveView(APIView):
     def get(self, request):
         try:
             if request.user.role == LykaUser.ADMIN:
-                commission_report = Total_Commission.generate_report()
+                commission_report = Total_Commission.calculate_total()
                 commission_report_serializer = TotalCommissionSerializer(commission_report, many=False)
                 return Response(commission_report_serializer.data, status=status.HTTP_200_OK)
             else:
                 return Response({"message" : "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
         except LykaUser.DoesNotExist:
             return Response({"message" : "Not Found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # except Exception as e:
+        #     return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 
@@ -219,11 +219,11 @@ class CommissionReportTimelineView(APIView):
 class AdminLoginView(APIView):
     def post(self, request):
         try:
-            phone = request.data["phone"]
+            email = request.data["email"]
             password = request.data["password"]
 
-            if LykaUser.objects.role_exists_phone(phone=phone, role=LykaUser.ADMIN):
-                user = LykaUser.objects.get(phone=phone, role = LykaUser.ADMIN)
+            if LykaUser.objects.role_exists_email(email=email, role=LykaUser.ADMIN):
+                user = LykaUser.objects.get(email=email, role = LykaUser.ADMIN)
                 if user.check_password(password):
                     refresh = RefreshToken.for_user(user)
                     access_token = str(refresh.access_token)

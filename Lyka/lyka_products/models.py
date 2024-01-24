@@ -25,9 +25,6 @@ class Color(models.Model):
 
     def __str__(self):
         return self.color
-    
-
-
 
 def product_image_upload_path(instance, filename):
     return f'Images/Product/{instance.id}/{filename}'
@@ -53,10 +50,13 @@ class Product(models.Model):
     colors = models.ManyToManyField(Color)
     images = models.ManyToManyField(ProductImage)
     verified = models.BooleanField(default=False)
+    added_on = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        ordering = ['-added_on']
 
     def __str__(self):
         return f'{self.brand} {self.name}'
-
 
 
     
