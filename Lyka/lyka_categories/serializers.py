@@ -2,12 +2,13 @@ from rest_framework import serializers
 from .models import *
 import uuid
 from django.utils.text import slugify
-
+from lyka_products.models import Details
 
 class RootSerializer(serializers.ModelSerializer):
+    root_id = serializers.UUIDField(read_only=True)
     class Meta:
         model = Root
-        fields = ['name']
+        fields = ['root_id','name']
 
     def create(self, validated_data):
         print(validated_data)
@@ -20,10 +21,10 @@ class RootSerializer(serializers.ModelSerializer):
 
 class MainSerializer(serializers.ModelSerializer):
     root = serializers.PrimaryKeyRelatedField(queryset=Root.objects.all())
-
+    main_id = serializers.UUIDField(read_only=True)
     class Meta:
         model = Main
-        fields = ["name", "root"]
+        fields = ['main_id', "name", "root"]
 
     def create(self, validated_data):
         name = validated_data['name']
@@ -35,10 +36,10 @@ class MainSerializer(serializers.ModelSerializer):
 
 class SubSerializer(serializers.ModelSerializer):
     main = serializers.PrimaryKeyRelatedField(queryset=Main.objects.all())
-
+    sub_id = serializers.UUIDField(read_only=True)
     class Meta:
         model = Sub
-        fields = ['name', 'main']
+        fields = ['sub_id', 'name', 'main']
 
     def create(self, validated_data):
         name = validated_data['name']
@@ -64,6 +65,11 @@ class SubViewSerializer(serializers.ModelSerializer):
         model = Sub
         fields = "__all__"
     
+
+class DetailsRetrieveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Details
+        fields = "__all__"
         
         
         

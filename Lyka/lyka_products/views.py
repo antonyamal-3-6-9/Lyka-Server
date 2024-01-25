@@ -75,7 +75,7 @@ class ProductCreateView(APIView):
 
             return Response({"message": "Product created successfully.","product" : product_serializer.data}, status=status.HTTP_201_CREATED)
         except KeyError as e:
-            return Response({"message" : str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message" : "Every filed must be filled up"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"message" : str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

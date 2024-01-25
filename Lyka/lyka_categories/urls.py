@@ -20,6 +20,9 @@ urlpatterns = [
     path("lyka-admin/root/update/", RootUpdateView.as_view(), name='root-update'),
     path('lyka-admin/main/update/', MainUpdateView.as_view(), name='main-delete'),
     path('lyka-admin/sub/update/', SubUpdateView.as_view(), name='sub-update'),
+
+    path('lyka-admin/main/details/add/', MainDetailsAddView.as_view(), name='details-add-view'),
+    path('lyka-admin/main/details/retrieve/<uuid:main_id>/', MainDetailsRetrieveView.as_view(), name="details-retrieve")
 ]
 
 if settings.DEBUG:

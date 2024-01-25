@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from lyka_user.models import LykaUser
 from rest_framework.views import APIView
-from lyka_products.models import Product
+from lyka_products.models import Product, Details
 
 
 class RootAddView(generics.ListCreateAPIView):
@@ -114,7 +114,7 @@ class MainUpdateView(APIView):
                     main.save()
                     return Response({"message": "Updated successfully"}, status=status.HTTP_200_OK)
                 else:
-                    return Response({"message" : "Cannot change the root category"}, status=status.HTTP_400_BAD_REQUEST)   
+                    return Response({"message" : "Cannot change the root category"}, status=status.HTTP_406_NOT_ACCEPTABLE)   
             main.name = name
             main.save()
             return Response({"message" : "Name Updated successfully"}, status=status.HTTP_200_OK)
@@ -147,8 +147,8 @@ class SubUpdateView(APIView):
             return Response({"message" : "Name Updated successfully"}, status=status.HTTP_200_OK)
         except Root.DoesNotExist:
             return Response({"message" : "Not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # except Exception as e:
+        #     return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
 
 class RootDelete(APIView):
@@ -210,3 +210,41 @@ class CategoryListView(APIView):
             return Response({"root" : root_serializer.data, "main" : main_serializer.data, "sub" : sub_serializer.data}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class MainDetailsAddView(APIView):
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+    def post(self, request):
+        try:
+            main_id = request.data['mainId']
+            key_features = request.data['keyFeatures']
+            all_details = request.data['allDetails']
+            main = Main.objects.get(main_id=main_id)
+            if main:
+                details, created = Details.objects.get_or_create(product_type=main)
+                details.key_features = key_features
+                details.all_details = all_details
+                details.save()
+                return Response({"message" : "success"}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"message" : "error"}, status=status.HTTP_400_BAD_REQUEST)
+        except KeyError:
+            return Response({"message" : "A key is missing in the request"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class MainDetailsRetrieveView(APIView):
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, main_id):
+        try:
+            details = Details.objects.get(product_type__main_id = main_id)
+            details_serializer = DetailsRetrieveSerializer(details, many=False)
+            return Response(details_serializer.data, status=status.HTTP_200_OK)
+        except Details.DoesNotExist:
+            return Response({"message" : "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"mmessage" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
