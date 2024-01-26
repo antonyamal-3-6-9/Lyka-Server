@@ -116,6 +116,33 @@ class ProductDetailsRetriveSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ColorEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Color
+        fields = ['color']
+
+class VariantEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Variations
+        fields = ['variation']
+
+class ImageEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['image']
+
+class ProductUpdateRetrieveSerializer(serializers.ModelSerializer):
+    images = ImageEditSerializer(many=True)
+    colors = ColorEditSerializer(many=True)
+    variations = VariantEditSerializer(many=True)
+    details = PDetailsSerializer(many=False)
+
+    class Meta:
+        model = Product
+        fields = "__all__"
+
+
+
 
 class UnitCreateSerializer(serializers.ModelSerializer):
     unit_id = serializers.UUIDField(read_only=True)

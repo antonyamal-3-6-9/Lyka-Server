@@ -147,8 +147,8 @@ class SubUpdateView(APIView):
             return Response({"message" : "Name Updated successfully"}, status=status.HTTP_200_OK)
         except Root.DoesNotExist:
             return Response({"message" : "Not found"}, status=status.HTTP_404_NOT_FOUND)
-        # except Exception as e:
-        #     return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
 
 class RootDelete(APIView):
@@ -157,7 +157,7 @@ class RootDelete(APIView):
     def delete(self, request, root_id):
         try:
             root = Root.objects.get(root_id=root_id)
-            if Main.objects.filter(root=root).exists() or Product.objects.filter(root_category=root).exists*():
+            if Main.objects.filter(root=root).exists() or Product.objects.filter(root_category=root).exists():
                 return Response({"message" : "Selected Category has child categories or products and cannot be deleted"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
             root.delete()
             return Response({"message" : "Successfully deleted"}, status=status.HTTP_200_OK)
@@ -172,7 +172,7 @@ class MainDelete(APIView):
     def delete(self, request, main_id):
         try:
             main = Main.objects.get(main_id=main_id)
-            if Sub.objects.filter(main=main).exists() or Product.objects.filter(main_category=main).exists*():
+            if Sub.objects.filter(main=main).exists() or Product.objects.filter(main_category=main).exists():
                 return Response({"message" : "Selected Category has child categories or products and can't be deleted"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
             main.delete()
             return Response({"message" : "Successfully deleted"}, status=status.HTTP_200_OK)

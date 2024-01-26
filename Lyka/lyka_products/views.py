@@ -4,7 +4,7 @@ from .serializers import *
 from .models import *
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db.models import Q
 
@@ -434,9 +434,108 @@ class ColorOrVariantExistsView(APIView):
             color = Color.objects.get(id=color_id)
             variant = Variations.objects.get(id=variant_id)
             return Response(
-                            {"message" : f'Not avaialble with given color: {color.color} and variant: {variant.variation}'},
+                            {"message" : f'Not available with given color: {color.color} and variant: {variant.variation}'},
                              status=status.HTTP_404_NOT_FOUND
                             )
         except Exception as e:
             return Response({"message" : str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductDeleteView(APIView):
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+    def delete(self, request, product_id):
+        try:
+            if Unit.objects.filter(product__productId=product_id).exists():
+                return Response({"message" : "An SKU exists, so can't be deleted"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            product = Product.objects.get(productId=product_id)
+            product.delete()
+            return Response({"message" : "Successfully deleted"}, status=status.HTTP_200_OK)
+        except Product.DoesNotExist:
+            return Response({"message" : "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class VariantAddView(APIView):
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+    
+    def post(self, request):
+        try:
+            product_id = request.data['productId']
+            variant_data = request.data['variant']
+
+            variant, created = Variations.objects.get_or_create(variation=variant_data)
+            Product.objects.get(productId=product_id).variations.add(variant)
+            Product.save()
+            variant_serializer = VariationsSerializer(variant, many=False)
+            return Response(variant_serializer.data, status=status.HTTP_200_OK)
+        except KeyError:
+            return Response({"message" : "Invalid request data"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        except Product.DoesNotExist:
+            return Response({"message" : "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class VariantDeleteView(APIView):
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request):
+        try:
+            productId = request.data['product_id']
+            variant_id = request.data['variant_id']
+            Product.objects.get(productId=productId).variations.remove(Variations.objects.get(id=variant_id))
+            Product.save()
+            return Response({"message" : "success"}, status=status.HTTP_200_OK)
+        except KeyError:
+            return Response({"message" : "Invalid Input"}, status=status.HTTP_400_BAD_REQUEST)
+        except Product.DoesNotExist:
+            return Response({"message" : "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class ColorAddView(APIView):
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+    
+    def post(self, request):
+        try:
+            product_id = request.data['productId']
+            color_data = request.data['color']
+
+            color, created = Color.objects.get_or_create(color=color_data)
+            Product.objects.get(productId=product_id).colors.add(color)
+            Product.save()
+            color_serializer = ColorSerializer(color, many=False)
+            return Response(color_serializer.data, status=status.HTTP_200_OK)
+        except KeyError:
+            return Response({"message" : "Invalid request data"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        except Product.DoesNotExist:
+            return Response({"message" : "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class ColorDeleteView(APIView):
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request):
+        try:
+            productId = request.data['product_id']
+            color_id = request.data['color_id']
+            Product.objects.get(productId=productId).colors.remove(Color.objects.get(id=color_id))
+            Product.save()
+            return Response({"message" : "success"}, status=status.HTTP_200_OK)
+        except KeyError:
+            return Response({"message" : "Invalid Input"}, status=status.HTTP_400_BAD_REQUEST)
+        except Product.DoesNotExist:
+            return Response({"message" : "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
