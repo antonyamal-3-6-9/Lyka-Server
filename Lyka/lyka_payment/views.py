@@ -134,7 +134,7 @@ class CouponDeleteView(generics.DestroyAPIView):
     authentication_classes = [JWTAuthentication]
 
 class CouponListVIew(generics.ListAPIView):
-    serializer_class = CouponSerializer()
+    serializer_class = CouponSerializer
     queryset = CouponType.objects.all()
     permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]

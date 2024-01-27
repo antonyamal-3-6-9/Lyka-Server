@@ -29,6 +29,8 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 class CouponSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
+    started_at = serializers.DateTimeField(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
     class Meta:
         model = CouponType
         fields = "__all__"
