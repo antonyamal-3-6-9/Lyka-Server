@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from lyka_order.models import Tax
 import uuid
 
 
@@ -35,6 +36,10 @@ class CouponSerializer(serializers.ModelSerializer):
         model = CouponType
         fields = "__all__"
 
+    def create(self, validated_data):
+        print(validated_data)
+        return super().create(validated_data)
+
 
 class TransactionRetriveSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,4 +50,11 @@ class TransactionRetriveSerializer(serializers.ModelSerializer):
 class SalesReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalesReport
+        fields = "__all__"
+
+class TaxSerializer(serializers.ModelSerializer):
+    added_at = serializers.DateTimeField(read_only=True)
+    active = serializers.BooleanField(read_only=True)
+    class Meta:
+        model = Tax
         fields = "__all__"

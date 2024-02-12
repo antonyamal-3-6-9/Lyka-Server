@@ -89,3 +89,6 @@ class OrderPriceSerializer(serializers.ModelSerializer):
         model = Order
         fields = ["item", "shipping_charge"]
 
+
+
+

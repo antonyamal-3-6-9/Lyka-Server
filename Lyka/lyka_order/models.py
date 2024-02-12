@@ -7,9 +7,11 @@ import json
 
 
 class Tax(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     rate = models.DecimalField(max_digits=5, decimal_places=2)
     limit = models.DecimalField(max_digits=10, decimal_places=2)
+    added_at = models.DateTimeField(auto_now_add=True, null=True)
+    active = models.BooleanField(default=True, null=True)
 
 class OrderCredentials(models.Model):
     shipping_partner_order_id = models.CharField(max_length=100, null=True)

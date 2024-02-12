@@ -8,7 +8,9 @@ class CommissionSerializer(serializers.ModelSerializer):
         model = Commission
         fields = "__all__"
 
+
 class TotalCommissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Total_Commission
         fields = "__all__"
+

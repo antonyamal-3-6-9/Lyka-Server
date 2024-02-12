@@ -29,7 +29,15 @@ urlpatterns = [
     path('lyka-admin/coupon/create/', CouponGenerateView.as_view(), name="coupon-create"),
     path('lyka-admin/coupon/update/<int:pk>/', CouponUpdateView.as_view(), name='coupon-update'),
     path('lyka-admin/coupon/delete/<int:pk>/', CouponDeleteView.as_view(), name="coupon-delete"),
-    path('lyka-admin/coupon/list/', CouponListVIew.as_view(), name='coupon-list')
+    path('lyka-admin/coupon/list/', CouponListVIew.as_view(), name='coupon-list'),
+
+    path('lyka-admin/charge/create/', TaxCreateView.as_view(), name="create-tax"),
+    path('lyka-admin/charge/update/<int:pk>/', TaxUpdateView.as_view(), name='update-tax'),
+    path('lyka-admin/charge/delete/<int:pk>/', TaxDeleteView.as_view(), name='delete-tax'),
+    path('lyka-admin/charge/list/', TaxListView.as_view(), name="list-tax"),
+
+    path('lyka-admin/coupon/toggle/<int:pk>/', CouponToggleActivationView.as_view(), name="coupon-toggle"),
+    path('lyka-admin/charge/toggle/<int:pk>/', TaxToggleActivationView.as_view(), name='toggle-tax'),
 ]
 
 

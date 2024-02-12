@@ -6,7 +6,6 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from lyka_products.models import Unit
 import requests
-from .signals import order_placed
 from rest_framework import generics
 from lyka_customer.models import Customer
 from lyka_seller.models import Seller
@@ -23,6 +22,7 @@ import stripe
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from lyka_user.models import Notification
+from lyka_order.models import Tax
 
 
 def generate_unique_payment_id():
@@ -115,20 +115,21 @@ def get_amount_and_check(order_id):
         else:
             return amount 
 
-class CouponGenerateView(generics.CreateAPIView):
-    serializer_class = CouponSerializer()
+
+class CouponGenerateView(generics.ListCreateAPIView):
+    serializer_class = CouponSerializer
     queryset = CouponType.objects.all()
     permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]
 
-class CouponUpdateView(generics.UpdateAPIView):
-    serializer_class = CouponSerializer()
+class CouponUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = CouponSerializer
     queryset = CouponType.objects.all()
     permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]
 
 class CouponDeleteView(generics.DestroyAPIView):
-    serializer_class = CouponSerializer()
+    serializer_class = CouponSerializer
     queryset = CouponType.objects.all()
     permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]
@@ -139,8 +140,70 @@ class CouponListVIew(generics.ListAPIView):
     permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]
 
-class RazorPayOrderPaymentCreationView(APIView):
+
+class TaxCreateView(generics.CreateAPIView):
+    serializer_class = TaxSerializer
+    queryset = Tax.objects.all()
     permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+class TaxUpdateView(generics.UpdateAPIView):
+    serializer_class = TaxSerializer
+    queryset = Tax.objects.all()
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+class TaxDeleteView(generics.DestroyAPIView):
+    serializer_class = TaxSerializer
+    queryset = Tax.objects.all()
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+class TaxListView(generics.ListAPIView):
+    serializer_class = TaxSerializer
+    queryset = Tax.objects.all()
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+class CouponToggleActivationView(APIView):
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+    def patch(request, pk):
+        try:
+            coupon = CouponType.objects.get(id=pk)
+            if coupon.is_active:
+                coupon.is_active = False
+            else:
+                coupon.is_active = True
+            coupon.save()
+            return Response({"message" : "Action performed successfully"}, status=status.HTTP_200_OK)
+        except CouponType.DoesNotExist:
+            return Response({"message" : "Coupon not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class TaxToggleActivationView(APIView):
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+    def patch(request, pk):
+        try:
+            charge = Tax.objects.get(id=pk)
+            if charge.active:
+                charge.active = False
+            else:
+                charge.active = True
+            charge.save()
+            return Response({"message" : "Action performed successfully"}, status=status.HTTP_200_OK)
+        except Tax.DoesNotExist:
+            return Response({"message" : "Tax not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+  
+class RazorPayOrderPaymentCreationView(APIView):
+    permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def razorpay_order(self, amount, customer_name):
@@ -158,6 +221,7 @@ class RazorPayOrderPaymentCreationView(APIView):
         try:
             order_id = request.data["order_id"]
             amount = None
+            print(request)
             user = request.user
             customer = Customer.objects.get(user=user)
             amount = get_amount_and_check(order_id)
@@ -166,6 +230,7 @@ class RazorPayOrderPaymentCreationView(APIView):
             customer_full_name = f'{customer.user.first_name} {customer.user.last_name }'
             order = self.razorpay_order(amount, customer_full_name)
             if order["status"] == "created":
+                print(order)
                 return Response({"order": order, "test_id": settings.RAZORPAY_API_KEY}, status=status.HTTP_200_OK)
             else:
                 return Response({"messsage": "Order failed"}, status=status.HTTP_400_BAD_REQUEST)
