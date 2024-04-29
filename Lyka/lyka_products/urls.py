@@ -32,6 +32,8 @@ urlpatterns = [
     path('lyka-admin/variant/add/', VariantAddView.as_view(), name='add-variant'),
     path('lyka-admin/variant/remove/', VariantDeleteView.as_view(), name='delete-variant'),
     path('lyka-admin/color/remove/', ColorDeleteView.as_view(), name="color-delete"),
+
+    path('demand/<str:option>/', LatestUnitView.as_view(), name="latest-unit"),
 ]
 
 if settings.DEBUG:

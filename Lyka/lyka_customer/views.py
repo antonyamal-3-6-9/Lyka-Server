@@ -339,6 +339,31 @@ class PasswordChangeView(APIView):
         
 
 
+class ReviewListView(APIView):
+    def get(self, request, productId):
+        try:
+            userReview = None
+            reviews = None
+            if request.user is not None:
+                userReview = CustomerReview.objects.get(product__productId=productId, customer__user = request.user)
+            
+                reviews = CustomerReview.objects.filter(product__productId = productId)
+                userReview_serializer = CustomerReviewSerializer(userReview, many=False)
+                reviews_serializer = CustomerReviewSerializer(reviews, many=True)
+                return Response({"ex" : True, "review" : reviews_serializer.data, "customer_review" : userReview_serializer.data}, status=status.HTTP_200_OK)
+            else:
+                reviews = CustomerReview.objects.filter(product__productId = productId)
+                return Response({"ex" : False, "review" : reviews_serializer.data,}, status=status)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_400_BAD_REQUEST)
+        
+class ReviewCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
+
 
 
 

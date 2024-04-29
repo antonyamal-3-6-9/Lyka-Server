@@ -169,7 +169,7 @@ class CouponToggleActivationView(APIView):
     permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]
 
-    def patch(request, pk):
+    def patch(self, request, pk):
         try:
             coupon = CouponType.objects.get(id=pk)
             if coupon.is_active:
@@ -187,7 +187,7 @@ class TaxToggleActivationView(APIView):
     permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]
 
-    def patch(request, pk):
+    def patch(self, request, pk):
         try:
             charge = Tax.objects.get(id=pk)
             if charge.active:

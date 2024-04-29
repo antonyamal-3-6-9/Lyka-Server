@@ -1,7 +1,8 @@
 from django.db import models
 from django.db import models
 from lyka_user.models import LykaUser
-import uuid
+from django.db.models import Avg
+
 
 
 class Customer(models.Model):
@@ -20,6 +21,11 @@ class CustomerReview(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     review = models.TextField(max_length=500)
     rating = models.DecimalField(max_digits=1, decimal_places=0)
+    added_on = models.DateTimeField(auto_now_add=True)
 
-
-    
+    def getRating(self, product):
+        try:
+            average_rating = CustomerReview.objects.filter(product=product).aggregate(avg_rate=Avg('rating'))['avg_rate']
+            return average_rating
+        except Exception as e:
+            return 0

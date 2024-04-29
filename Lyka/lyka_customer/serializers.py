@@ -85,6 +85,7 @@ class CustomerUpdateSerializer(serializers.ModelSerializer):
 
 
 class CustomerReviewSerializer(serializers.ModelSerializer):
+    added_on = serializers.DateTimeField(read_only=True)
     class Meta:
         model = CustomerReview
         fields = "__all__"
@@ -99,3 +100,4 @@ class CustomerRetriveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ["user", "id", "is_email_verified", "is_verified"]
+

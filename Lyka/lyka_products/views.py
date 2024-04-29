@@ -545,4 +545,22 @@ class ColorDeleteView(APIView):
             return Response({"message" : "Not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class LatestUnitView(APIView):
+    def get(self, request, option):
+        try:
+            if option == "latest":
+                latest_items = Unit.objects.order_by('-added_on')[:4]
+                latest_data = UnitRetriveSerializer(latest_items, many=True)
+                return Response(latest_data.data, status=status.HTTP_200_OK)
+            elif option == "trending":
+                trending_items = Unit.objects.order_by('-added_on')[:4]
+                trending_data = UnitRetriveSerializer(trending_items, many=True)
+                return Response(trending_data.data, status=status.HTTP_200_OK)
+            else:
+                return Response({"message" : "Invalid option"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"message" : "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
