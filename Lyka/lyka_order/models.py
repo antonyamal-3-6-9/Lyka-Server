@@ -118,7 +118,7 @@ class Order(models.Model):
     billing_address = models.ForeignKey(CustomerAddress, on_delete=models.CASCADE, related_name="bill_add", null=True)
     shipping_address = models.ForeignKey(CustomerAddress, on_delete=models.CASCADE, related_name="ship_add", null=True)
     credentials = models.OneToOneField(OrderCredentials, on_delete=models.CASCADE, null=True)
-    time = models.DateTimeField(default=timezone.now())
+    time = models.DateTimeField(default=timezone.now)
     payment_method = models.CharField(max_length=50, null=True)
     applied_coupon = models.ForeignKey("lyka_payment.CouponType", on_delete=models.SET_NULL, null=True)
     shipping_charge = models.PositiveIntegerField(default=0)

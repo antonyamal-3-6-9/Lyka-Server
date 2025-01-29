@@ -1,8 +1,7 @@
 from django.db import models
 from django.db.models import Sum
-from decimal import Decimal
 from django.utils import timezone
-from lyka_order.models import Order
+
 
 # Create your models here.
 

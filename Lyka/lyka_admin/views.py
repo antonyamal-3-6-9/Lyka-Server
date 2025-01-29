@@ -186,13 +186,14 @@ class CommissionReportRetrieveView(APIView):
             if request.user.role == LykaUser.ADMIN:
                 commission_report = Total_Commission.calculate_total()
                 commission_report_serializer = TotalCommissionSerializer(commission_report, many=False)
+                commission_report.delete()
                 return Response(commission_report_serializer.data, status=status.HTTP_200_OK)
             else:
                 return Response({"message" : "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
         except LykaUser.DoesNotExist:
             return Response({"message" : "Not Found"}, status=status.HTTP_404_NOT_FOUND)
-        # except Exception as e:
-        #     return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({"message" : str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 
